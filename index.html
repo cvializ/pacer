@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<style>
+    button {
+        position: absolute;
+        inset: 0;
+        border: 0;
+
+        font-size: 64px;
+        text-shadow: grey 1px 1px 1px;
+        color: white;
+        text-shadow: grey 3px 2px 1px;
+        background-color: rgb(255, 80, 80);
+    }
+</style>
+<button id="beat">Beat</button>
+<script>
+    const beatElement = document.getElementById('beat');
+
+    let values = [];
+    const MAX_AVERAGE = 5;
+    function computeAverage(nextValue) {
+        values.unshift(nextValue);
+        if (values.length > MAX_AVERAGE) {
+            values.pop();
+        }
+
+        const average = values.reduce((acc, d) => acc + d) / values.length;
+        return Math.round(average);
+    }
+
+    let previousClick = null;
+    beatElement.addEventListener('click', () => {
+        if (!previousClick) {
+            previousClick = new Date();
+            beatElement.innerText = 'Beat again';
+            return;
+        }
+
+        const secondsElapsed = (new Date() - previousClick) / 1000;
+        const beatsPerSecond = 1 / secondsElapsed;
+        const beatsPerMinute = Math.round(beatsPerSecond * 60);
+
+        const averageBpm = computeAverage(beatsPerMinute)
+
+        beatElement.innerText = `${averageBpm} bpm`;
+
+        previousClick = new Date();
+    });
+</script>
