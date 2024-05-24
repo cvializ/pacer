@@ -5,10 +5,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>
     html {
-        background-color: rgb(255, 80, 80);
+        background-color: rgb(80, 194, 255);
+        overflow: hidden;
     }
 
-    #beat {
+    #move {
         position: absolute;
         inset: 0;
         border: 0;
@@ -23,42 +24,66 @@
         -webkit-user-select: none;
         cursor: pointer;
         color: white;
-        text-shadow: rgb(130, 40, 40) 4px 3px 1px;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        text-shadow: rgb(40, 67, 130) 4px 3px 1px;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     }
 </style>
-<div role="button" id="beat">Beat</div>
+<div role="button" id="move">Move</div>
 <script>
-    const beatElement = document.getElementById('beat');
+    const moveElement = document.getElementById('move');
 
-    let values = [];
-    const MAX_AVERAGE = 5;
-    function computeAverage(nextValue) {
-        values.unshift(nextValue);
-        if (values.length > MAX_AVERAGE) {
-            values.pop();
-        }
+    const setMessage = (message) => moveElement.innerText = message;
+    const getMessage = () => moveElement.innerText;
 
-        const average = values.reduce((acc, d) => acc + d) / values.length;
-        return Math.round(average);
-    }
+    const createInstance = () => {
+        var lastTimestamp;
+        var speedX = 0, speedY = 0, speedZ = 0;
+        window.addEventListener('devicemotion', function (event) {
+            console.log(event);
+            const { x, y, z } = event.accelerationIncludingGravity;
 
-    let previousClick = null;
-    beatElement.addEventListener('click', () => {
-        if (!previousClick) {
-            previousClick = new Date();
-            beatElement.innerText = 'Tap again';
-            return;
-        }
+            const currentMessage = getMessage();
 
-        const secondsElapsed = (new Date() - previousClick) / 1000;
-        const beatsPerSecond = 1 / secondsElapsed;
-        const beatsPerMinute = Math.round(beatsPerSecond * 60);
+            if (Math.abs(x) > 9) {
+                setMessage('X is Up');
+                return;
+            }
 
-        const averageBpm = computeAverage(beatsPerMinute)
+            if (Math.abs(y) > 9) {
+                setMessage('Y is Up');
+                return;
+            }
 
-        beatElement.innerText = `${averageBpm} bpm`;
+            if (Math.abs(z) > 9) {
+                setMessage('Z is Up');
+            }
+        }, false);
+    };
 
-        previousClick = new Date();
+    // const options = {
+    //     enableHighAccuracy: true,
+    //     maximumAge: 30000,
+    //     timeout: 27000,
+    // };
+
+    // const watchID = navigator.geolocation.watchPosition((position) => {
+    //     console.log(`${position.coords.latitude} ${position.coords.longitude}`);
+    // }, () => {
+    //     console.log('its bad')
+    // }, options);
+
+    const clickPromise = new Promise(resolve => {
+        moveElement.addEventListener('click', resolve);
     });
+
+    clickPromise
+        .then(() => {
+            if (!window.DeviceOrientationEvent) {
+                setMessage('Use a phone');
+                return Promise.reject();
+            }
+
+            return window.DeviceOrientationEvent.requestPermission();
+        })
+        .then(() => createInstance());
 </script>
