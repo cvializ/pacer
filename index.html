@@ -78,9 +78,39 @@
         return self$;
     };
 
+    const of = (scalar) => {
+        return createObservable((next) => {
+            next(scalar);
+        });
+    };
+
     const pipe = (observable$, operator) => {
         return operator(observable$);
-    }
+    };
+
+    const tap = (cb) => (source$) => {
+        return createObservable((next, error, complete) => {
+            source$.subscribe((value) => {
+                cb(value);
+                next(value);
+            }, error, complete);
+
+            return noop;
+        });
+    };
+
+    const scan = (cb, seed) => source$ => {
+        return createObservable((next, error, complete) => {
+            let accumulator = seed;
+
+            source$.subscribe((value) => {
+                accumulator = cb(accumulator, value);
+                next(accumulator);
+            }, error, complete);
+
+            return noop;
+        });
+    };
 
     const map = (cb) => (source$) => {
         return createObservable((next, error, complete) => {
@@ -104,7 +134,7 @@
         });
     };
 
-    const pair = () => (source$) => {
+    const bufferQueue = (length) => (source$) => {
         return createObservable((next, error, complete) => {
             const buffer = [];
 
@@ -115,7 +145,7 @@
                     return;
                 }
 
-                if (buffer.length === 3) {
+                if (buffer.length > length) {
                     buffer.pop();
                 }
 
@@ -125,6 +155,17 @@
             return noop;
         });
     }
+
+    const pairwise = () => (source$) => {
+        return source$.pipe(bufferQueue(2));
+    }
+
+    const pair = () => source$ => {
+        return source$.pipe(
+            bufferQueue(2),
+            filter(buffer => buffer.length === 1),
+        )
+    };
 
     const merge = (...sources) => {
         return createObservable((next, error, complete) => {
@@ -205,11 +246,11 @@
 
         incrementRefreshCount();
         setRefreshCountMessage(getRefreshCount());
-        const { computeAverage } = createAverager();
+        // const { computeAverage } = createAverager();
 
         const position$ = watchPosition();
         const distance$ = position$.pipe(
-            filter(position => position.speed === null),
+            filter(position => position.speed !== null),
             map((position) => {
                 const { speed, timestamp } = position;
                 return {
@@ -217,35 +258,63 @@
                     timestamp,
                 };
             }),
-            pair(),
-            map(([earlier, later]) => {
+            pairwise(),
+            map(([later, earlier]) => {
                 const intervalMs = later.timestamp - earlier.timestamp;
-                const distance = later.speed * intervalMs * 1000;
+                const distance = later.speed * intervalMs / 1000;
                 return distance;
             }),
         );
+        const sum = (a, b) => a + b;
+        const cumulativeDistance$ = distance$.pipe(
+            scan(sum, 0)
+        );
 
-        const positionMessage$ = position$.pipe(map(({ timestamp }) => {
-            return `Got position at ${new Date(timestamp)}`;
-        }));
+        const speed$ = position$.pipe(
+            map(({ speed }) => speed),
+        );
 
-        const distanceMessage$ = distance$.pipe(map((distance) => {
-            return `Distance: ${distance}`;
-        }));
+        const average = values => values.reduce((acc, d) => acc + d) / values.length;
+        const metersPerSecondToMilesPerHour = speed => speed * 2.23694;
 
-        merge(positionMessage$, distanceMessage$).subscribe(
-            (message) => appendDebugMessage(message + '\n'));
+        const speedBuffer$ = position$.pipe(
+            map(({ speed }) => speed),
+            filter(speed => speed !== null),
+            bufferQueue(5),
+        );
+        const averageSpeed$ = speedBuffer$.pipe(
+            map(speeds => average(speeds)),
+        );
 
-        const unsubscribe = distance$.subscribe((result) => {
-            const { speed } = result;
-            const averageSpeed = computeAverage(speed || 0);
-            const averageSpeedMph = averageSpeed * 2.23694;
-            setMessage(averageSpeedMph);
+        const unsubscribe = averageSpeed$.pipe(
+            map(metersPerSecondToMilesPerHour),
+        ).subscribe((averageSpeedMph) => {
+            setMessage(averageSpeedMph + 'mph');
         }, error => {
             setDebugMessage(error);
         });
 
         setMessage('ack');
+
+        const positionMessage$ = position$.pipe(map(({ timestamp }) => {
+            return `Got position at ${new Date(timestamp)}`;
+        }));
+
+        const distanceMessage$ = cumulativeDistance$.pipe(map((distance) => {
+            return `Cumulative Distance: ${distance}`;
+        }));
+
+        const speedBufferMessage$ = merge(
+            of('cool'),
+            speedBuffer$.pipe(
+                map(JSON.stringify),
+                map((distance) => {
+                    return `Speed: ${distance}`;
+                }))
+            );
+
+        merge(of('ack'), positionMessage$, distanceMessage$, speedBufferMessage$).subscribe(
+            (message) => appendDebugMessage(message + '\n'));
     }
 
     const clickPromise = new Promise(resolve => {
@@ -256,24 +325,5 @@
         .then(() => navigator.permissions.query({ name: 'geolocation' }))
         .then(() => createInstance())
         .catch(e => setMessage(e.message + '\n' + e.stack));
-
-const createAverager = () => {
-    let values = [];
-    const MAX_AVERAGE = 5;
-
-    function computeAverage(nextValue) {
-        values.unshift(nextValue);
-        if (values.length > MAX_AVERAGE) {
-            values.pop();
-        }
-
-        const average = values.reduce((acc, d) => acc + d) / values.length;
-        return Math.round(average);
-    }
-
-    return {
-        computeAverage,
-    };
-}
 </script>
 
