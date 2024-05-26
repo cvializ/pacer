@@ -18,7 +18,7 @@
         vertical-align: middle;
     }
 
-    #move {
+    #tapper {
         position: absolute;
         width: fit-content;
         height: fit-content;
@@ -51,109 +51,109 @@
     }
 </style>
 <div id="refreshCount">Tap</div>
-<div role="button" id="move">Tap</div>
+<div role="button" id="tapper">Tap</div>
 <pre id="debugMessage"></pre>
 <script>
     window.onerror = (error) => alert(error);
 </script>
 <script>
-    const createObservableInternals = (initialValue) => {
-        let value = initialValue;
-        let subscriptions = [];
+    // const createObservableInternals = (initialValue) => {
+    //     let value = initialValue;
+    //     let subscriptions = [];
 
-        function getValue() {
-            return value;
-        }
+    //     function getValue() {
+    //         return value;
+    //     }
 
-        function setValue(newValue) {
-            value = newValue;
-            subscriptions.forEach((subscription) => subscription(newValue));
-        }
+    //     function setValue(newValue) {
+    //         value = newValue;
+    //         subscriptions.forEach((subscription) => subscription(newValue));
+    //     }
 
-        function subscribe(subscription) {
-            subscriptions = [...subscriptions, subscription];
+    //     function subscribe(subscription) {
+    //         subscriptions = [...subscriptions, subscription];
 
-            return () => {
-                unsubscribe(subscription);
-            };
-        }
+    //         return () => {
+    //             unsubscribe(subscription);
+    //         };
+    //     }
 
-        function unsubscribe(subscription) {
-            subscriptions = subscriptions.filter(
-                (testedSubscription) => testedSubscription !== subscription,
-            );
-        }
+    //     function unsubscribe(subscription) {
+    //         subscriptions = subscriptions.filter(
+    //             (testedSubscription) => testedSubscription !== subscription,
+    //         );
+    //     }
 
-        return [getValue, setValue, subscribe];
-    }
+    //     return [getValue, setValue, subscribe];
+    // }
 
-    const createObservable = (observer) => {
-        const [getValue, setValue, subscribe] = createObservableInternals();
+    // const createObservable = (observer) => {
+    //     const [getValue, setValue, subscribe] = createObservableInternals();
 
-        const subscribeWrapper = (subscriber) => {
-            subscribe(subscriber);
-            observer(setValue, alert);
-        };
+    //     const subscribeWrapper = (subscriber) => {
+    //         subscribe(subscriber);
+    //         observer(setValue, alert);
+    //     };
 
-        return {
-            subscribe: subscribeWrapper,
-        };
-    };
+    //     return {
+    //         subscribe: subscribeWrapper,
+    //     };
+    // };
 
-    const createSubject = () => {
-        let next;
-        const { subscribe } = createObservable(internalNext => {
-            next = internalNext;
-        });
+    // const createSubject = () => {
+    //     let next;
+    //     const { subscribe } = createObservable(internalNext => {
+    //         next = internalNext;
+    //     });
 
-        return {
-            next,
-            subscribe,
-        };
-    };
+    //     return {
+    //         next,
+    //         subscribe,
+    //     };
+    // };
 
-    const createBehaviorSubject = (initialValue) => {
-        let value = initialValue;
-        const { next, subscribe } = createSubject();
+    // const createBehaviorSubject = (initialValue) => {
+    //     let value = initialValue;
+    //     const { next, subscribe } = createSubject();
 
-        const behaviorSubscribe = (subscription) => {
-            subscribe(subscription);
-            subscription(value);
-        };
+    //     const behaviorSubscribe = (subscription) => {
+    //         subscribe(subscription);
+    //         subscription(value);
+    //     };
 
-        return {
-            next,
-            value,
-            subscribe: behaviorSubscribe,
-        };
-    };
+    //     return {
+    //         next,
+    //         value,
+    //         subscribe: behaviorSubscribe,
+    //     };
+    // };
 
-    const createObservableFromPromise = (promise) => {
-        const promiseStream$ = createBehaviorSubject();
+    // const createObservableFromPromise = (promise) => {
+    //     const promiseStream$ = createBehaviorSubject();
 
-        const { next } = promiseStream$;
-        const onError = () => { };
+    //     const { next } = promiseStream$;
+    //     const onError = () => { };
 
-        promise.then(promiseStream.next, onError);
+    //     promise.then(promiseStream.next, onError);
 
-        return promiseStream$;
-    };
+    //     return promiseStream$;
+    // };
 
-    const from = (iterable) => {
-        const { subscribe } = createObservable((next) => {
-            iterable.forEach(next);
-        });
+    // const from = (iterable) => {
+    //     const { subscribe } = createObservable((next) => {
+    //         iterable.forEach(next);
+    //     });
 
-        return {
-            subscribe: (subscriber) => {
-                const { subscribe } = createObservable((next) => {
-                    iterable.forEach(next);
-                });
+    //     return {
+    //         subscribe: (subscriber) => {
+    //             const { subscribe } = createObservable((next) => {
+    //                 iterable.forEach(next);
+    //             });
 
-                subscribe((item) => subscriber(item))
-            }
-        }
-    };
+    //             subscribe((item) => subscriber(item))
+    //         }
+    //     }
+    // };
 
     const setValue = (key, value) => window.localStorage.setItem(key, value);
     const getValue = (key) => window.localStorage.getItem(key);
@@ -181,9 +181,9 @@
         setDebugMessage(getDebugMessage() + message);
     }
 
-    const moveElement = document.getElementById('move');
-    const setMessage = (message) => moveElement.innerText = message;
-    const getMessage = () => moveElement.innerText;
+    const tapElement = document.getElementById('tapper');
+    const setMessage = (message) => tapElement.innerText = message;
+    const getMessage = () => tapElement.innerText;
 
     const fetchLocation = () => (
         new Promise((resolve, reject) =>
@@ -195,13 +195,13 @@
         )
     );
 
-    const watchPosition = () => createObservable((resolve, reject) => {
-            const id = navigator.geolocation.watchPosition(
+    const watchPosition = (cb) => {
+            const id = window.navigator.geolocation.watchPosition(
                 ({
                     timestamp,
                     coords,
                 }) => {
-                    resolve({
+                    cb({
                         id,
                         timestamp,
                         accuracy: coords.accuracy,
@@ -211,31 +211,43 @@
                         altitudeAccuracy: coords.altitudeAccuracy,
                         heading: coords.heading,
                         speed: coords.speed,
-                    })
+                    }, null);
                 },
-                (error) => reject(error),
+                (error) => { cb(null, error) },
                 {
                     enableHighAccuracy: true,
                     maximumAge: 10,
                     timeout: 27000,
                 }
             );
-        });
+        };
     const clearWatchPosition = (id) => navigator.geolocation.clearWatch(id);
 
     const createInstance = () => {
+        setMessage('Walk');
+
         incrementRefreshCount();
         setRefreshCountMessage(getRefreshCount());
+        const { computeAverage } = createAverager();
 
-        watchPosition().subscribe(({ id, ...rest }) => {
-            appendDebugMessage(JSON.stringify(rest) + '\n');
+        watchPosition((result, error) => {
+            if (error) {
+                setDebugMessage(error);
+                return;
+            }
+            const { speed } = result;
+            const averageSpeed = computeAverage(speed || 0);
+            appendDebugMessage(JSON.stringify(result) + '\n');
+
+            const averageSpeedMph = averageSpeed * 2.23694;
+            setMessage(averageSpeedMph);
         });
 
         setMessage('ack');
     }
 
     const clickPromise = new Promise(resolve => {
-        moveElement.addEventListener('click', resolve);
+        tapElement.addEventListener('click', resolve);
     });
 
     clickPromise
@@ -243,29 +255,23 @@
         .then(() => createInstance())
         .catch(e => setMessage(e.message + '\n' + fe.stack));
 
-// const createInstance = () => {
-//     var lastTimestamp;
-//     var speedX = 0, speedY = 0, speedZ = 0;
-//     window.addEventListener('devicemotion', function (event) {
-//         console.log(event);
-//         const { x, y, z } = event.accelerationIncludingGravity;
+const createAverager = () => {
+    let values = [];
+    const MAX_AVERAGE = 5;
 
-//         const currentMessage = getMessage();
+    function computeAverage(nextValue) {
+        values.unshift(nextValue);
+        if (values.length > MAX_AVERAGE) {
+            values.pop();
+        }
 
-//         if (Math.abs(x) > 9) {
-//             setMessage('X is Up');
-//             return;
-//         }
+        const average = values.reduce((acc, d) => acc + d) / values.length;
+        return Math.round(average);
+    }
 
-//         if (Math.abs(y) > 9) {
-//             setMessage('Y is Up');
-//             return;
-//         }
-
-//         if (Math.abs(z) > 9) {
-//             setMessage('Z is Up');
-//         }
-//     }, false);
-// };
+    return {
+        computeAverage,
+    };
+}
 </script>
 
