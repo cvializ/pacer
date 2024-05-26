@@ -27,8 +27,8 @@
         border: 0;
 
         text-align: center;
-        font-size: min(5vw, 15vh);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: min(15vw, 10vh);
+        font-family: "Menlo", monospace;
 
         user-select: none;
         -webkit-user-select: none;
@@ -38,20 +38,14 @@
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     }
 
-    #refreshCount {
-        position: absolute;
-        inset: 0 0 auto auto;
-        padding: 5px;
-    }
-
     #debugMessage {
         position: absolute;
         inset: auto auto 0 auto;
         padding: 5px;
+        font-size: 10px;
     }
 </style>
-<div id="refreshCount">Tap</div>
-<div role="button" id="tapper">Tap</div>
+<pre role="button" id="tapper">Tap</pre>
 <pre id="debugMessage"></pre>
 <script>
     window.onerror = (error) => alert(error);
@@ -180,22 +174,6 @@
     const setValue = (key, value) => window.localStorage.setItem(key, value);
     const getValue = (key) => window.localStorage.getItem(key);
 
-    const REFRESH_COUNT_KEY = 'refreshCount';
-    const refreshCountElement = document.getElementById('refreshCount');
-    const getRefreshCount = () => parseInt(getValue(REFRESH_COUNT_KEY), 10);
-    const setRefreshCount = (count) => setValue(REFRESH_COUNT_KEY, count);
-    const setRefreshCountMessage = (message) => refreshCountElement.innerText = message;
-
-    const incrementRefreshCount = () => {
-        if (getRefreshCount() === null) {
-            setRefreshCount(0);
-            return;
-        }
-
-        const incremented = getRefreshCount() + 1;
-        setRefreshCount(incremented);
-    };
-
     const debugMessage = document.getElementById('debugMessage');
     const setDebugMessage = (message) => debugMessage.innerText = message;
     const getDebugMessage = () => debugMessage.innerText;
@@ -244,10 +222,6 @@
     const createInstance = () => {
         setMessage('Walk');
 
-        incrementRefreshCount();
-        setRefreshCountMessage(getRefreshCount());
-        // const { computeAverage } = createAverager();
-
         const position$ = watchPosition();
         const distance$ = position$.pipe(
             filter(position => position.speed !== null),
@@ -286,35 +260,27 @@
             map(speeds => average(speeds)),
         );
 
-        const unsubscribe = averageSpeed$.pipe(
+        const formatter = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 2 });
+        const mphMessage$ = averageSpeed$.pipe(
             map(metersPerSecondToMilesPerHour),
-        ).subscribe((averageSpeedMph) => {
-            setMessage(averageSpeedMph + 'mph');
+        );
+
+        const metersToFeet = meters => meters * 3.28084;
+        const mergedMessages$ = merge(
+            mphMessage$.pipe(map(speed => ({ speed }))),
+            cumulativeDistance$.pipe(
+                map(distance => metersToFeet(distance)),
+                map(distance => ({ distance }))
+            ),
+        ).pipe(
+            scan((acc, d) => ({ ...acc, ...d }), {}),
+        );
+
+        mergedMessages$.subscribe(({ speed, distance }) => {
+            setMessage(formatter.format(speed) + 'mph' + '\n' + formatter.format(distance) + 'ft');
         }, error => {
             setDebugMessage(error);
         });
-
-        setMessage('ack');
-
-        const positionMessage$ = position$.pipe(map(({ timestamp }) => {
-            return `Got position at ${new Date(timestamp)}`;
-        }));
-
-        const distanceMessage$ = cumulativeDistance$.pipe(map((distance) => {
-            return `Cumulative Distance: ${distance}`;
-        }));
-
-        const speedBufferMessage$ = merge(
-            of('cool'),
-            speedBuffer$.pipe(
-                map(JSON.stringify),
-                map((distance) => {
-                    return `Speed: ${distance}`;
-                }))
-            );
-
-        merge(of('ack'), positionMessage$, distanceMessage$, speedBufferMessage$).subscribe(
-            (message) => appendDebugMessage(message + '\n'));
     }
 
     const clickPromise = new Promise(resolve => {
