@@ -57,103 +57,84 @@
     window.onerror = (error) => alert(error);
 </script>
 <script>
-    // const createObservableInternals = (initialValue) => {
-    //     let value = initialValue;
-    //     let subscriptions = [];
+    const noop = () => {};
 
-    //     function getValue() {
-    //         return value;
-    //     }
+    const createObservable = (subscriber) => {
 
-    //     function setValue(newValue) {
-    //         value = newValue;
-    //         subscriptions.forEach((subscription) => subscription(newValue));
-    //     }
+        const subscribe = (onNext = noop, onError = noop, onComplete = noop) => {
+            return subscriber(onNext, onError, onComplete);
+        };
 
-    //     function subscribe(subscription) {
-    //         subscriptions = [...subscriptions, subscription];
+        const self$ = {
+            subscribe,
+            pipe: (...operators) => (
+                operators.reduce((
+                    observable$,
+                    operator
+                ) => operator(observable$), self$)
+            ),
+        };
 
-    //         return () => {
-    //             unsubscribe(subscription);
-    //         };
-    //     }
+        return self$;
+    };
 
-    //     function unsubscribe(subscription) {
-    //         subscriptions = subscriptions.filter(
-    //             (testedSubscription) => testedSubscription !== subscription,
-    //         );
-    //     }
+    const pipe = (observable$, operator) => {
+        return operator(observable$);
+    }
 
-    //     return [getValue, setValue, subscribe];
-    // }
+    const map = (cb) => (source$) => {
+        return createObservable((next, error, complete) => {
+            source$.subscribe((value) => {
+                next(cb(value));
+            }, error, complete);
 
-    // const createObservable = (observer) => {
-    //     const [getValue, setValue, subscribe] = createObservableInternals();
+            return noop;
+        });
+    };
 
-    //     const subscribeWrapper = (subscriber) => {
-    //         subscribe(subscriber);
-    //         observer(setValue, alert);
-    //     };
+    const filter = (condition) => source$ => {
+        return createObservable((next, error, complete) => {
+            source$.subscribe((value) => {
+                if (condition(value)) {
+                    next(value);
+                }
+            }, error, complete);
 
-    //     return {
-    //         subscribe: subscribeWrapper,
-    //     };
-    // };
+            return noop;
+        });
+    };
 
-    // const createSubject = () => {
-    //     let next;
-    //     const { subscribe } = createObservable(internalNext => {
-    //         next = internalNext;
-    //     });
+    const pair = () => (source$) => {
+        return createObservable((next, error, complete) => {
+            const buffer = [];
 
-    //     return {
-    //         next,
-    //         subscribe,
-    //     };
-    // };
+            source$.subscribe((value) => {
+                buffer.unshift(value);
 
-    // const createBehaviorSubject = (initialValue) => {
-    //     let value = initialValue;
-    //     const { next, subscribe } = createSubject();
+                if (buffer.length === 1) {
+                    return;
+                }
 
-    //     const behaviorSubscribe = (subscription) => {
-    //         subscribe(subscription);
-    //         subscription(value);
-    //     };
+                if (buffer.length === 3) {
+                    buffer.pop();
+                }
 
-    //     return {
-    //         next,
-    //         value,
-    //         subscribe: behaviorSubscribe,
-    //     };
-    // };
+                next(buffer);
+            }, error, complete);
 
-    // const createObservableFromPromise = (promise) => {
-    //     const promiseStream$ = createBehaviorSubject();
+            return noop;
+        });
+    }
 
-    //     const { next } = promiseStream$;
-    //     const onError = () => { };
+    const merge = (...sources) => {
+        return createObservable((next, error, complete) => {
+            sources.forEach(source$ => source$.subscribe((value) => {
+                next(value);
+            }, error, complete));
 
-    //     promise.then(promiseStream.next, onError);
-
-    //     return promiseStream$;
-    // };
-
-    // const from = (iterable) => {
-    //     const { subscribe } = createObservable((next) => {
-    //         iterable.forEach(next);
-    //     });
-
-    //     return {
-    //         subscribe: (subscriber) => {
-    //             const { subscribe } = createObservable((next) => {
-    //                 iterable.forEach(next);
-    //             });
-
-    //             subscribe((item) => subscriber(item))
-    //         }
-    //     }
-    // };
+            return noop;
+        });
+    };
 
     const setValue = (key, value) => window.localStorage.setItem(key, value);
     const getValue = (key) => window.localStorage.getItem(key);
@@ -178,30 +159,21 @@
     const setDebugMessage = (message) => debugMessage.innerText = message;
     const getDebugMessage = () => debugMessage.innerText;
     const appendDebugMessage = (message) => {
-        setDebugMessage(getDebugMessage() + message);
+        setDebugMessage(getDebugMessage() + message + '\n');
     }
 
     const tapElement = document.getElementById('tapper');
     const setMessage = (message) => tapElement.innerText = message;
     const getMessage = () => tapElement.innerText;
 
-    const fetchLocation = () => (
-        new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                maximumAge: 10,
-                timeout: 27000,
-            })
-        )
-    );
-
-    const watchPosition = (cb) => {
+    const watchPosition = () => {
+        return createObservable((next, error, complete) => {
             const id = window.navigator.geolocation.watchPosition(
                 ({
                     timestamp,
                     coords,
                 }) => {
-                    cb({
+                    next({
                         id,
                         timestamp,
                         accuracy: coords.accuracy,
@@ -211,16 +183,21 @@
                         altitudeAccuracy: coords.altitudeAccuracy,
                         heading: coords.heading,
                         speed: coords.speed,
-                    }, null);
+                    });
                 },
-                (error) => { cb(null, error) },
+                (e) => { error(e.message) },
                 {
                     enableHighAccuracy: true,
                     maximumAge: 10,
                     timeout: 27000,
                 }
             );
-        };
+
+            return () => {
+                window.navigator.geolocation.clearWatch(id);
+            };
+        });
+    };
     const clearWatchPosition = (id) => navigator.geolocation.clearWatch(id);
 
     const createInstance = () => {
@@ -230,17 +207,42 @@
         setRefreshCountMessage(getRefreshCount());
         const { computeAverage } = createAverager();
 
-        watchPosition((result, error) => {
-            if (error) {
-                setDebugMessage(error);
-                return;
-            }
+        const position$ = watchPosition();
+        const distance$ = position$.pipe(
+            filter(position => position.speed === null),
+            map((position) => {
+                const { speed, timestamp } = position;
+                return {
+                    speed,
+                    timestamp,
+                };
+            }),
+            pair(),
+            map(([earlier, later]) => {
+                const intervalMs = later.timestamp - earlier.timestamp;
+                const distance = later.speed * intervalMs * 1000;
+                return distance;
+            }),
+        );
+
+        const positionMessage$ = position$.pipe(map(({ timestamp }) => {
+            return `Got position at ${new Date(timestamp)}`;
+        }));
+
+        const distanceMessage$ = distance$.pipe(map((distance) => {
+            return `Distance: ${distance}`;
+        }));
+
+        merge(positionMessage$, distanceMessage$).subscribe(
+            (message) => appendDebugMessage(message + '\n'));
+
+        const unsubscribe = distance$.subscribe((result) => {
             const { speed } = result;
             const averageSpeed = computeAverage(speed || 0);
-            appendDebugMessage(JSON.stringify(result) + '\n');
-
             const averageSpeedMph = averageSpeed * 2.23694;
             setMessage(averageSpeedMph);
+        }, error => {
+            setDebugMessage(error);
         });
 
         setMessage('ack');
@@ -253,7 +255,7 @@
     clickPromise
         .then(() => navigator.permissions.query({ name: 'geolocation' }))
         .then(() => createInstance())
-        .catch(e => setMessage(e.message + '\n' + fe.stack));
+        .catch(e => setMessage(e.message + '\n' + e.stack));
 
 const createAverager = () => {
     let values = [];
