@@ -30,25 +30,39 @@ const run = () => {
             return distance;
         }),
     );
+
     const sum = (a, b) => a + b;
+    const footFormatter = new Intl.NumberFormat("en-US", {
+        style: 'unit',
+        unit: 'foot',
+        maximumFractionDigits: 0,
+    });
+    const metersToFeet = meters => meters * 3.28084;
+    const formatDistance = value => footFormatter.format(value);
     const cumulativeDistanceFt$ = distance$.pipe(
         scan(sum, 0),
-        map(distance => metersToFeet(distance)),
+        map(metersToFeet),
+        map(formatDistance),
     );
 
     const average = values => values.reduce((acc, d) => acc + d) / values.length;
     const metersPerSecondToMilesPerHour = speed => speed * 2.23694;
-    const formatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+    const mphFormatter = new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: 0,
+        style: 'unit',
+        unit: 'mile-per-hour',
+    });
+    const formatMph = (value) => mphFormatter.format(value)
 
     const averageSpeedMph$ = position$.pipe(
         map(({ speed }) => speed),
         filter(speed => speed !== null),
         bufferQueue(5),
-        map(speeds => average(speeds)),
+        map(average),
         map(metersPerSecondToMilesPerHour),
+        map(formatMph),
     );
 
-    const metersToFeet = meters => meters * 3.28084;
     const mergedMessages$ = merge(
         averageSpeedMph$.pipe(map(speed => ({ speed }))),
         cumulativeDistanceFt$.pipe(map(distance => ({ distance }))),
@@ -57,7 +71,7 @@ const run = () => {
     );
 
     mergedMessages$.subscribe(({ speed, distance }) => {
-        setMessage(formatter.format(speed) + 'mph' + '\n' + formatter.format(distance) + 'ft');
+        setMessage(`${speed}\n${distance}`);
     }, error => {
         setDebugMessage(error);
     });
