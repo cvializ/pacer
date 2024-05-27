@@ -3,6 +3,7 @@
 <link rel="manifest" href="/manifest.json" />
 <meta name='viewport' content='initial-scale=1, viewport-fit=cover' />
 <meta name="mobile-web-app-capable" content="yes">
+<script src="https://js.sentry-cdn.com/9d1ff02e1d1bdcbd0fb9922d48c5b483.min.js" crossorigin="anonymous"></script>
 <style>
     html {
         background-color: rgb(80, 194, 255);
@@ -47,9 +48,6 @@
 </style>
 <pre role="button" id="tapper">Tap</pre>
 <pre id="debugMessage"></pre>
-<script>
-    window.onerror = (error) => alert(error);
-</script>
 <script>
     const noop = () => {};
 
