@@ -258,7 +258,7 @@
             map(speeds => average(speeds)),
         );
 
-        const formatter = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 2 });
+        const formatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
         const mphMessage$ = averageSpeed$.pipe(
             map(metersPerSecondToMilesPerHour),
         );
