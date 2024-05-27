@@ -34,3 +34,5 @@ export const watchPosition = () => {
 };
 
 export const clearWatchPosition = (id) => navigator.geolocation.clearWatch(id);
+
+export const getGeolocationPermission = () => navigator.permissions.query({ name: 'geolocation' });
