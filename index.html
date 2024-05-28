@@ -6,9 +6,21 @@
 <script src="https://js.sentry-cdn.com/9d1ff02e1d1bdcbd0fb9922d48c5b483.min.js" crossorigin="anonymous"></script>
 <script src="./src/index.js" type="module"></script>
 <style>
+    :root {
+        --green-percent: 100%;
+        --red-percent: 0%;
+    }
+
     html {
-        background-color: rgb(80, 194, 255);
+        background-color: color-mix(in srgb, green var(--green-percent), transparent);
         overflow: hidden;
+    }
+
+    html::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 0;
+        background-color: color-mix(in srgb, red var(--red-percent), transparent);
     }
 
     body {

@@ -39,7 +39,7 @@ const run = () => {
     });
     const metersToFeet = meters => meters * 3.28084;
     const formatDistance = value => footFormatter.format(value);
-    const cumulativeDistanceFt$ = distance$.pipe(
+    const cumulativeDistanceFtFormatted$ = distance$.pipe(
         scan(sum, 0),
         map(metersToFeet),
         map(formatDistance),
@@ -53,19 +53,32 @@ const run = () => {
         unit: 'mile-per-hour',
     });
     const formatMph = (value) => mphFormatter.format(value)
-
-    const averageSpeedMph$ = position$.pipe(
+    const averageSpeed$ = position$.pipe(
         map(({ speed }) => speed),
         filter(speed => speed !== null),
         bufferQueue(5),
         map(average),
         map(metersPerSecondToMilesPerHour),
-        map(formatMph),
     );
 
+    const targetSpeed = 3;
+
+    const paceDifference$ = averageSpeed$.pipe(
+        map(speed => speed - targetSpeed),
+    );
+
+    paceDifference$.subscribe(difference => {
+        const range = [0, 3];
+        const spread = range[1] - range[0];
+        const normalizedDifference = Math.min(Math.max(range[0], difference), range[1]) / spread;
+        document.documentElement.style.setProperty('--red-percent', `${100 * normalizedDifference}%`);
+        document.documentElement.style.setProperty('--green-percent', `${100 - (100 * normalizedDifference)}%`);
+    });
+
+    const averageSpeedFormatted$ = averageSpeed$.pipe(map(formatMph));
     const mergedMessages$ = merge(
-        averageSpeedMph$.pipe(map(speed => ({ speed }))),
-        cumulativeDistanceFt$.pipe(map(distance => ({ distance }))),
+        averageSpeedFormatted$.pipe(map(speed => ({ speed }))),
+        cumulativeDistanceFtFormatted$.pipe(map(distance => ({ distance }))),
     ).pipe(
         scan((acc, d) => ({ ...acc, ...d }), {}),
     );
