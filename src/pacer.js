@@ -1,14 +1,13 @@
 import { merge } from './observable.js';
-import { scan, bufferQueue, filter, map, pairwise } from './operators.js';
+import { scan, bufferQueue, filter, map, pairwise, tap } from './operators.js';
 import { getGeolocationPermission, watchPosition } from './geolocation.js';
 import { setMessage } from './tapper.js';
+import { createPollStream } from './pollStream.js';
+import { setBackgroundColor } from './background.js';
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
 const getDebugMessage = () => getDebugMessageElement().innerText;
-const appendDebugMessage = (message) => {
-    setDebugMessage(getDebugMessage() + message + '\n');
-}
 
 const run = () => {
     setMessage('Walk');
@@ -63,16 +62,36 @@ const run = () => {
 
     const targetSpeed = 3;
 
-    const paceDifference$ = averageSpeed$.pipe(
-        map(speed => speed - targetSpeed),
-    );
-
-    paceDifference$.subscribe(difference => {
-        const range = [0, 3];
+    const clamp = (start, end, value) => {
+        const range = [start, end];
         const spread = range[1] - range[0];
-        const normalizedDifference = Math.min(Math.max(range[0], difference), range[1]) / spread;
-        document.documentElement.style.setProperty('--red-percent', `${100 * normalizedDifference}%`);
-        document.documentElement.style.setProperty('--green-percent', `${100 - (100 * normalizedDifference)}%`);
+        const normalizedDifference = Math.min(Math.max(range[0], value), range[1]) / spread;
+        return normalizedDifference;
+    }
+
+    const toStatusColor = (normalizedValue) => {
+        if (normalizedValue > .95) {
+            return 'green';
+        }
+
+        if (normalizedValue > .75) {
+            return 'yellow';
+        }
+
+        return 'red';
+    }
+
+    // const pollStream$ = createPollStream('/inputs/foo.json').pipe(
+    //     map(value => value.wow),
+    // );
+
+    averageSpeed$.pipe(
+        map(speed => targetSpeed - speed),
+        map(value => clamp(0, 3, value)),
+        map(value => 1 - value),
+        map(value => toStatusColor(value)),
+    ).subscribe(color => {
+        setBackgroundColor(color)
     });
 
     const averageSpeedFormatted$ = averageSpeed$.pipe(map(formatMph));
