@@ -72,6 +72,10 @@ const run = () => {
     }
 
     const toStatusColor = (normalizedValue) => {
+        if (normalizedValue > 1.05) {
+            return 'blue';
+        }
+
         if (normalizedValue > .95) {
             return 'green';
         }
@@ -83,7 +87,7 @@ const run = () => {
         return 'red';
     }
 
-    const targetSpeed = 3;
+    const targetSpeed = 8; // 8mph = 7:30 min /mile
 
     averageSpeed$.pipe(
         map(speed => targetSpeed - speed),
