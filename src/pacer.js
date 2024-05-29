@@ -60,7 +60,9 @@ const run = () => {
         map(metersPerSecondToMilesPerHour),
     );
 
-    const targetSpeed = 3;
+    // const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
+    //     map(value => value.averageSpeed),
+    // );
 
     const clamp = (start, end, value) => {
         const range = [start, end];
@@ -81,9 +83,7 @@ const run = () => {
         return 'red';
     }
 
-    // const pollStream$ = createPollStream('/inputs/foo.json').pipe(
-    //     map(value => value.wow),
-    // );
+    const targetSpeed = 3;
 
     averageSpeed$.pipe(
         map(speed => targetSpeed - speed),
