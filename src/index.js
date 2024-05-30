@@ -17,5 +17,5 @@ const clickPromise = new Promise(resolve => {
 
 onReadyPromise
     .then(() => clickPromise)
-    .then(() => createInstance())
-    .catch(e => setMessage(e.message + '\n' + e.stack));
+    .then(() => createInstance());
+    // .catch(e => setMessage(e.message + '\n' + e.stack));

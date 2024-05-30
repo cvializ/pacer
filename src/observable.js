@@ -1,28 +1,66 @@
 import { noop } from './functional.js';
+import { createSingleEventSingleSubscriberObservable as createSingleObservable, withPipe } from './single.js';
 
-export const createObservable = (subscriber) => {
+
+export const createObservable = withPipe((subscriber) => {
 
     const subscribe = (onNext = noop, onError = noop, onComplete = noop) => {
+        let next;
+        const next$ = createSingleObservable((n) => {
+            next = n;
+        });
+        const wrappedOnNext = (value) => {
+            next(value);
+        };
+        var unsubscribeNext = next$.subscribe((value) => onNext(value));
+
+        let error;
+        const error$ = createSingleObservable((e) => {
+            error = e;
+        });
+        const wrappedOnError = (e) => {
+            teardown();
+            error(e);
+        };
+        var unsubscribeError = error$.subscribe((error) => onError(error));
+
+        let complete;
+        const complete$ = createSingleObservable((c) => {
+            complete = c;
+        });
+        const wrappedOnComplete = () => {
+            teardown();
+            complete();
+        };
+        var unsubscribeComplete = complete$.subscribe(() => onComplete());
+
+        var teardown = () => {
+            unsubscribeNext();
+            unsubscribeError();
+            unsubscribeComplete();
+        };
+
         try {
-            const result = subscriber(onNext, onError, onComplete);
-            return result || noop;
+            const cleanup = subscriber(
+                wrappedOnNext,
+                wrappedOnError,
+                wrappedOnComplete
+            );
+
+            return () => {
+                teardown();
+                cleanup();
+            };
         } catch (e) {
-            onError(e);
+            teardown();
+            wrappedOnError(e);
         }
     };
 
-    const self$ = {
+    return {
         subscribe,
-        pipe: (...operators) => (
-            operators.reduce((
-                observable$,
-                operator
-            ) => operator(observable$), self$)
-        ),
     };
-
-    return self$;
-};
+});
 
 export const createSubject = () => {
     const subscribers = [];
@@ -32,11 +70,15 @@ export const createSubject = () => {
     }
 
     const error = (e) => {
-        subscribers.forEach(subscriber => subscriber.error(e));
+        subscribers.forEach(subscriber => {
+            subscriber.error(e)
+            subscriber.next = noop;
+        });
     }
 
     const complete = () => {
         subscribers.forEach(subscriber => subscriber.complete());
+        subscriber.next = noop;
     }
 
     const stream$ = createObservable((next, error, complete) => {
