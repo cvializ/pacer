@@ -33,23 +33,23 @@ const createObservable = withPipe((subscriber) => {
 
 const merge = (...sources) => {
     return createObservable((next) => {
-        sources.forEach(source$ => source$.subscribe((value) => {
+        const cleanups = sources.map(source$ => source$.subscribe((value) => {
             next(value);
         }));
 
-        return noop;
+        return () => cleanups.forEach(cleanup => cleanup());
     });
 };
 
 const filter = (condition) => source$ => {
     return createObservable((next) => {
-        source$.subscribe((value) => {
+        const cleanup = source$.subscribe((value) => {
             if (condition(value)) {
                 next(value);
             }
         });
 
-        return noop;
+        return cleanup;
     });
 };
 
@@ -57,22 +57,22 @@ const scan = (cb, seed) => source$ => {
     return createObservable((next) => {
         let accumulator = seed;
 
-        source$.subscribe((value) => {
+        const cleanup = source$.subscribe((value) => {
             accumulator = cb(accumulator, value);
             next(accumulator);
         });
 
-        return noop;
+        return cleanup;
     });
 };
 
 const map = (cb) => (source$) => {
     return createObservable((next) => {
-        source$.subscribe((value) => {
+        const cleanup = source$.subscribe((value) => {
             next(cb(value));
         });
 
-        return noop;
+        return cleanup;
     });
 };
 
@@ -84,10 +84,12 @@ const withUnsubscribe = (create) => (subscriber) => {
     let unsubscribe;
     const unsubscribe$ = createObservable((u) => {
         unsubscribe = () => u(true);
+
+        return () => unsubscribe();
     });
 
     const observable$ = create((next) => {
-        const cleanup = subscriber(next);
+        const cleanup = subscriber(next) || noop;
 
         return () => {
             unsubscribe();
@@ -99,6 +101,7 @@ const withUnsubscribe = (create) => (subscriber) => {
         unsubscribe$.pipe(wrapWithKey('unsubscribe')),
         observable$.pipe(wrapWithKey('value')),
     ).pipe(
+        scan((acc, d) => ({ ...acc, ...d }), {}),
         filter(({ unsubscribe }) => !unsubscribe),
         pick('value'),
     );
