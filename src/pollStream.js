@@ -7,8 +7,10 @@ export const createPollStream = (path) => {
         window.fetch(path)
             .then(response => response.json())
             .then(json => next(json))
-            .catch(e => error(e))
-            .finally(() => {
+            .catch(e => {
+                error(e);
+            })
+            .then(() => {
                 setTimeout(fetchLoop, 100);
             });
     }

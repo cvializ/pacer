@@ -66,23 +66,19 @@ export const createObservable = withPipe((subscriber) => {
 });
 
 export const createSubject = () => {
-    const subscribers = [];
+    // const subscribers = [];
+    let nextSubscriber;
+    const subscriber$ = createSingleObservable(next => {
+        nextSubscriber = next;
+    });
 
-    const next = (value) => {
-        subscribers.forEach(subscriber => subscriber.next(value));
-    }
+    // 1. use a buffer operator to build a list?
+    // 2. create a next stream and a subscriber stream and merge scan em <------ this is it
+    // 3. ???
+    let next;
+    subscriber$.subscribe(subscriber => {
 
-    const error = (e) => {
-        subscribers.forEach(subscriber => {
-            subscriber.error(e)
-            subscriber.next = noop;
-        });
-    }
-
-    const complete = () => {
-        subscribers.forEach(subscriber => subscriber.complete());
-        subscriber.next = noop;
-    }
+    });
 
     const stream$ = createObservable((next, error, complete) => {
         const subscriber = {
@@ -90,13 +86,29 @@ export const createSubject = () => {
             error,
             complete,
         };
-        subscribers.push(subscriber);
+        // subscribers.push(subscriber);
+        nextSubscriber(subscriber);
+
+        next('value');
 
         return () => {
-            const index = subscribers.indexOf(subscriber);
-            subscribers.splice(index, 1);
+            // const index = subscribers.indexOf(subscriber);
+            // subscribers.splice(index, 1);
+
         };
     });
+
+    const next = (value) => {
+        subscribers.forEach(subscriber => subscriber.next(value));
+    }
+
+    const error = (e) => {
+        subscribers.forEach(subscriber => subscriber.error(e));
+    }
+
+    const complete = () => {
+        subscribers.forEach(subscriber => subscriber.complete());
+    }
 
     return {
         stream$,
@@ -105,6 +117,23 @@ export const createSubject = () => {
         complete,
     };
 }
+
+// const { stream$, next, error } = createSubject();
+
+// stream$.subscribe((value) => {
+//     if (value === 2) {
+//         error('wow');
+//         error('cool');
+//     }
+
+//     console.log('VALUE X', value);
+// }, e => {
+//     console.warn(e);
+// })
+
+// next(1);
+// next(2);
+// next(3);
 
 export const of = (scalar) => {
     return createObservable((next, error, complete) => {

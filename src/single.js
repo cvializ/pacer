@@ -111,6 +111,23 @@ export const createSingleEventSingleSubscriberObservable =
     withUnsubscribe(
         createObservable);
 
+// let next;
+// const o$ = createSingleEventSingleSubscriberObservable((n) => {
+//     next = n;
+// });
+
+// const unsub = o$.subscribe((value) => {
+//     if (value === 2) {
+//         unsub();
+//     }
+
+//     console.log('VALUE', value);
+// })
+
+// next(1);
+// next(2);
+// next(3);
+
 // const value$ = createSingleEventObservable((next) => {
 //     next('x');
 //     next('y');
