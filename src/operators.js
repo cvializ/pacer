@@ -3,12 +3,12 @@ import { noop } from './functional.js';
 
 export const tap = (cb) => (source$) => {
     return createObservable((next, error, complete) => {
-        source$.subscribe((value) => {
+        const unsubscribe = source$.subscribe((value) => {
             cb(value);
             next(value);
         }, error, complete);
 
-        return noop;
+        return () => unsubscribe();
     });
 };
 
@@ -16,34 +16,34 @@ export const scan = (cb, seed) => source$ => {
     return createObservable((next, error, complete) => {
         let accumulator = seed;
 
-        source$.subscribe((value) => {
+        const unsubscribe = source$.subscribe((value) => {
             accumulator = cb(accumulator, value);
             next(accumulator);
         }, error, complete);
 
-        return noop;
+        return () => unsubscribe();
     });
 };
 
 export const map = (cb) => (source$) => {
     return createObservable((next, error, complete) => {
-        source$.subscribe((value) => {
+        const unsubscribe = source$.subscribe((value) => {
             next(cb(value));
         }, error, complete);
 
-        return noop;
+        return () => unsubscribe();
     });
 };
 
 export const filter = (condition) => source$ => {
     return createObservable((next, error, complete) => {
-        source$.subscribe((value) => {
+        const unsubscribe = source$.subscribe((value) => {
             if (condition(value)) {
                 next(value);
             }
         }, error, complete);
 
-        return noop;
+        return () => unsubscribe();
     });
 };
 
@@ -51,7 +51,7 @@ export const bufferQueue = (length) => (source$) => {
     return createObservable((next, error, complete) => {
         const buffer = [];
 
-        source$.subscribe((value) => {
+        const unsubscribe = source$.subscribe((value) => {
             buffer.unshift(value);
 
             if (buffer.length === 1) {
@@ -65,7 +65,7 @@ export const bufferQueue = (length) => (source$) => {
             next(buffer);
         }, error, complete);
 
-        return noop;
+        return () => unsubscribe();
     });
 }
 

@@ -9,34 +9,33 @@ export const createObservable = withPipe((subscriber) => {
         const next$ = createSingleObservable((n) => {
             next = n;
         });
-        const wrappedOnNext = (value) => {
-            next(value);
-        };
-        var unsubscribeNext = next$.subscribe((value) => onNext(value));
+        const unsubscribeNext = next$.subscribe((value) => onNext(value));
 
         let error;
         const error$ = createSingleObservable((e) => {
             error = e;
         });
-        const wrappedOnError = (e) => {
-            teardown();
-            error(e);
-        };
-        var unsubscribeError = error$.subscribe((error) => onError(error));
+        const unsubscribeError = error$.subscribe((error) => onError(error));
 
         let complete;
         const complete$ = createSingleObservable((c) => {
             complete = c;
         });
-        const wrappedOnComplete = () => {
-            teardown();
-            complete();
-        };
-        var unsubscribeComplete = complete$.subscribe(() => onComplete());
+        const unsubscribeComplete = complete$.subscribe(() => onComplete());
 
-        var teardown = () => {
+        const wrappedOnNext = (value) => {
+            next(value);
+        };
+        const wrappedOnError = (e) => {
             unsubscribeNext();
+            unsubscribeComplete();
+            error(e);
             unsubscribeError();
+        };
+        const wrappedOnComplete = () => {
+            unsubscribeNext()
+            unsubscribeError();
+            complete();
             unsubscribeComplete();
         };
 
@@ -48,12 +47,16 @@ export const createObservable = withPipe((subscriber) => {
             );
 
             return () => {
-                teardown();
+                unsubscribeNext();
+                unsubscribeError();
+                unsubscribeComplete();
                 cleanup();
             };
         } catch (e) {
-            teardown();
+            unsubscribeNext();
+            unsubscribeComplete();
             wrappedOnError(e);
+            unsubscribeError();
         }
     };
 

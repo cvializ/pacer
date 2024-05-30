@@ -84,9 +84,7 @@ const withUnsubscribe = (create) => (subscriber) => {
     let unsubscribe;
     const unsubscribe$ = createObservable((u) => {
         unsubscribe = () => u(true);
-    }).pipe(
-        wrapWithKey('unsubscribe')
-    );
+    });
 
     const observable$ = create((next) => {
         const cleanup = subscriber(next);
@@ -101,7 +99,7 @@ const withUnsubscribe = (create) => (subscriber) => {
         unsubscribe$.pipe(wrapWithKey('unsubscribe')),
         observable$.pipe(wrapWithKey('value')),
     ).pipe(
-        filter(({ unsubscribe }) => unsubscribe),
+        filter(({ unsubscribe }) => !unsubscribe),
         pick('value'),
     );
 };

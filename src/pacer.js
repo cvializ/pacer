@@ -85,13 +85,14 @@ const run = () => {
 
     const targetSpeed = 3;
 
-    averageSpeed$.pipe(
+    const unsubscribe = averageSpeed$.pipe(
         map(speed => targetSpeed - speed),
         map(value => clamp(0, 3, value)),
         map(value => 1 - value),
         map(value => toStatusColor(value)),
     ).subscribe(color => {
-        setBackgroundColor(color)
+        setBackgroundColor(color);
+        unsubscribe();
     });
 
     const averageSpeedFormatted$ = averageSpeed$.pipe(map(formatMph));
