@@ -5,6 +5,8 @@
 //         return subscriber(onNext, ...rest);
 //     };
 
+import { noop } from "../functional.js";
+
 //     return {
 //         subscribe,
 //     };
@@ -42,16 +44,16 @@ const withSubscribeBehavior = (anyArgs) => withBehavior((unity) => {
     };
 })
 
-export const withSubscribe = create => subscriber => {
-    const observable$ = create(subscriber);
+export const withSubscribe = create => (subscriber, ...rest) => {
+    const unity = create(subscriber, ...rest);
 
-    const subscribe = (onNext, ...rest) => {
-        const cleanup = observable$.subscribe(onNext, ...rest);
+    const subscribe = (onNext) => {
+        const cleanup = subscriber(onNext);
         return cleanup;
     };
 
     return {
-        ...observable$,
+        ...unity,
         subscribe,
     };
 }

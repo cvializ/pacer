@@ -1,5 +1,5 @@
 export const terseCreateUnity = () => ({});
 
-export const createUnity = () => {
+export const createUnity = (...args) => {
     return {};
 };

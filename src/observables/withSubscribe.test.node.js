@@ -1,25 +1,28 @@
-import test from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert';
-import { withIdentity } from './withIdentity.js';
-import { createUnity } from './createUnity.js';
+import { withSubscribe } from './withSubscribe.js';
+import { createUnity } from '../unities/createUnity.js';
+import { noop } from '../functional.js';
 
-test('deep-equality to object', () => {
-    const create = withIdentity(createUnity);
-    const unity = create();
+test('has subscribe property', () => {
+    const createSubscribable = withSubscribe(createUnity);
+    const subscribable = createSubscribable(noop);
 
-    assert.deepEqual(unity, {});
+    assert.ok(subscribable.subscribe);
 });
 
-test('inequality to wrapped unity', () => {
-    const unity = createUnity();
-    const wrappedCreateUnity = withIdentity(createUnity);
-    const wrappedUnity = wrappedCreateUnity();
+test('has callable subscribe property with cleanup return value', () => {
+    const createSubscribable = withSubscribe(createUnity);
 
-    assert.notStrictEqual(unity, wrappedUnity);
-});
+    const subscriber = (next) => {
+        const cleanup = noop;
+        return cleanup;
+    }
+    const subscribable = createSubscribable(subscriber);
 
-test('inequality of wrapped creator', () => {
-    const wrappedCreateUnity = withIdentity(createUnity);
+    const onNext = mock.fn(value => {});
+    const cleanup = subscribable.subscribe(onNext)
 
-    assert.notStrictEqual(createUnity, wrappedCreateUnity);
+    assert.strictEqual(onNext.mock.callCount(), 0);
+    assert.strictEqual(typeof cleanup, 'function');
 });
