@@ -1,22 +1,15 @@
 import { withIdentity } from "../observables/higher-order";
 
-export const terseWithPipe = withIdentity(create => subscriber => {
-    const observable$ = create(subscriber);
-
-    const pipe = (...operators) => (
+export const terseWithPipe = withBehavior((observable$) => ({
+    pipe: (...operators) => (
         operators.reduce((
             observable$,
             operator
         ) => operator(observable$), observable$)
-    );
+    )
+}));
 
-    return {
-        ...observable$,
-        pipe,
-    };
-});
-
-export const withPipe = withIdentity(create => subscriber => {
+export const withPipe = create => subscriber => {
     const pipe = (...operators) => (
         operators.reduce((
             observable$,
@@ -35,4 +28,4 @@ export const withPipe = withIdentity(create => subscriber => {
         subscribe,
         pipe,
     };
-});
+};

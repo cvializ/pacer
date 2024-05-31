@@ -13,6 +13,8 @@
  * generally want operators etc. for application code.
  */
 
+import { withPipe } from "../operators/withPipe.js";
+import { createUnity } from "../unities/createUnity.js";
 import { withSubscribe } from "./withSubscribe.js";
 
 const terseCreateObservable = (subscriber) => ({
@@ -30,4 +32,4 @@ export const createObservable = (subscriber) => {
 };
 
 
-export const createUnityObservable = withSubscribe(createUnity);
+export const createUnityObservable = withPipe(withSubscribe(createUnity));

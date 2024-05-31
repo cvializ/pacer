@@ -1,19 +1,9 @@
-export const withBehavior = behavior => (create) => (...args) => {
+
+export const withBehavior = behavior => create => (...args) => {
     const unity = create(...args);
 
     return {
         ...unity,
-        ...behavior(unity),
+        ...behavior(...args),
     };
 };
-
-const withSpecificBehavior = (anyArgs) => withBehavior((unity) => {
-    return (create) => (...args) => {
-        const unity = create(...args);
-
-        return {
-            ...unity,
-            ...behavior(unity),
-        };
-    };
-})
