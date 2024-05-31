@@ -4,19 +4,12 @@
  */
 
 import { noop } from "./functional.js";
+import { withSubscribe } from "./observables/withSubscribe.js";
 import { withPipe } from "./operators/withPipe.js";
+import { createUnity } from "./unities/createUnity.js";
 
 
-const createObservable = withPipe((subscriber) => {
-    const subscribe = (onNext) => {
-        const cleanup = subscriber(onNext);
-        return cleanup;
-    };
-
-    return {
-        subscribe,
-    };
-});
+const createObservable = withPipe(withSubscribe(createUnity));
 
 const merge = (...sources) => {
     return createObservable((next) => {
@@ -25,6 +18,16 @@ const merge = (...sources) => {
         }));
 
         return () => cleanups.forEach(cleanup => cleanup());
+    });
+};
+
+const merge$ = (sources$) => {
+    const unsubscribe$ = createObservable()
+
+    const merged$ = createObservable(next => {
+        sources$.subscribe(source$ => {
+            source$.subscribe(value => next);
+        })
     });
 };
 

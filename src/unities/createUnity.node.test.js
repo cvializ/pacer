@@ -3,13 +3,13 @@ import assert from 'node:assert';
 import { createUnity } from './createUnity.js';
 import { terseCreateUnity as createUnity } from './createUnity.js';
 
-test('deep-equality to object', (t) => {
+test('deep-equality to object', () => {
     const unity = createUnity();
 
     assert.deepEqual(unity, {});
 });
 
-test('inequality to other unity', (t) => {
+test('inequality to other unity', () => {
     const unity = createUnity();
     const other = createUnity();
 

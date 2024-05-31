@@ -8,7 +8,7 @@ export const tap = (cb) => (source$) => {
             next(value);
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
@@ -21,7 +21,7 @@ export const scan = (cb, seed) => source$ => {
             next(accumulator);
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
@@ -31,7 +31,7 @@ export const map = (cb) => (source$) => {
             next(cb(value));
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
@@ -43,7 +43,7 @@ export const filter = (condition) => source$ => {
             }
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
@@ -65,7 +65,7 @@ export const bufferQueue = (length) => (source$) => {
             next(buffer);
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 }
 

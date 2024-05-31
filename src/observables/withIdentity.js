@@ -22,27 +22,3 @@ export const withIdentity = create => subscriber => {
         ...observable$,
     };
 }
-
-export const withSubscribe = create => subscriber => {
-    const observable$ = create(subscriber);
-    const subscribe = (onNext, ...rest) => {
-        const cleanup = observable$.subscribe(onNext, ...rest);
-        return cleanup;
-    };
-
-    return {
-        ...observable$,
-        subscribe,
-    };
-}
-
-const withThreeObservable = subscriber => {
-    const subscribe = (onNext, onError, onComplete) => {
-        const cleanup = subscriber(onNext, onError, onComplete);
-        return cleanup;
-    };
-
-    return {
-        subscribe,
-    };
-};

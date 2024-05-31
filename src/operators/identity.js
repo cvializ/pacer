@@ -1,28 +1,25 @@
-import { createObservable } from "../createObservable";
+import { createPipeable } from "./createPipeable.js";
 
-const terseIdentity = () => source$ => createObservable((...next) => source$.subscribe(...next));
+const terseIdentity = () => source$ => createPipeable((...next) => source$.subscribe(...next));
 
 const nIdentity = () => (source$) => {
-    return createObservable((next, ...args) => {
+    return createPipeable((next, ...args) => {
         const unsubscribe = source$.subscribe((value) => {
             next(value);
         }, ...args);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
 const threeIdentity = () => (source$) => {
-    return createObservable((next, error, complete) => {
+    return createPipeable((next, error, complete) => {
         const unsubscribe = source$.subscribe((value) => {
             next(value);
         }, error, complete);
 
-        return () => unsubscribe();
+        return unsubscribe;
     });
 };
 
-export const identity = threeIdentity; // TODO: try the others
-
-
-
+export const identity = nIdentity; // TODO: try the others

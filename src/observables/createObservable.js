@@ -13,23 +13,22 @@
  * generally want operators etc. for application code.
  */
 
-import { withPipe } from "../operators/withPipe.js";
-import { createUnity } from "../unities/createUnity.js";
-import { withSubscribe } from "./withSubscribe.js";
+import { createPipeable } from "../operators/createPipeable.js";
+import { withErrorAndComplete } from "./withErrorAndComplete.js";
 
-const terseCreateObservable = (subscriber) => ({
-    subscribe: (...onNext) => subscriber(...onNext)
-});
+// const terseCreateObservable = (subscriber) => ({
+//     subscribe: (...onNext) => subscriber(...onNext)
+// });
 
-export const createObservable = (subscriber) => {
-    const subscribe = (onNext, ...rest) => {
-        return subscriber(onNext, ...rest);
-    };
+// export const createObservable = (subscriber) => {
+//     const subscribe = (onNext, ...rest) => {
+//         return subscriber(onNext, ...rest);
+//     };
 
-    return {
-        subscribe,
-    };
-};
+//     return {
+//         subscribe,
+//     };
+// };
 
 
-export const createUnityObservable = withPipe(withSubscribe(createUnity));
+export const createObservable = withUnsubscribe(withErrorAndComplete(createPipeable));

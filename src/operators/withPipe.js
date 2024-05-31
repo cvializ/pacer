@@ -1,31 +1,17 @@
-import { withIdentity } from "../observables/higher-order";
+import { withBehavior } from "../unities/withBehavior.js";
 
-export const terseWithPipe = withBehavior((observable$) => ({
-    pipe: (...operators) => (
-        operators.reduce((
-            observable$,
-            operator
-        ) => operator(observable$), observable$)
-    )
-}));
+export const withPipe = withBehavior((create, ...args) => {
+    const subscribable = create(...args);
 
-export const withPipe = create => subscriber => {
     const pipe = (...operators) => (
         operators.reduce((
-            observable$,
+            accumulatedSubscribable,
             operator
-        ) => operator(observable$), observable$)
+        ) => operator(accumulatedSubscribable), subscribable)
     );
 
-    const observable$ = create(subscriber);
-    const subscribe = (onNext, ...rest) => {
-        const cleanup = observable.subscribe(onNext, ...rest);
-        return cleanup;
-    };
-
     return {
-        ...observable$,
-        subscribe,
-        pipe,
+        ...subscribable,
+        pipe
     };
-};
+});
