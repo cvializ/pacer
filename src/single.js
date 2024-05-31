@@ -4,26 +4,13 @@
  */
 
 import { noop } from "./functional.js";
+import { withPipe } from "./operators/withPipe.js";
 
-export const withPipe = (create) => subscriber => {
-    const pipe = (...operators) => (
-        operators.reduce((
-            observable$,
-            operator
-        ) => operator(observable$), observable$)
-    );
-
-    const observable$ = create(subscriber);
-
-    return {
-        ...observable$,
-        pipe,
-    };
-};
 
 const createObservable = withPipe((subscriber) => {
     const subscribe = (onNext) => {
-        return subscriber(onNext);
+        const cleanup = subscriber(onNext);
+        return cleanup;
     };
 
     return {

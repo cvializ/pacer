@@ -1,9 +1,39 @@
 import { noop } from './functional.js';
 import { createSingleEventSingleSubscriberObservable as createSingleObservable, withPipe } from './single.js';
 
+const createObservable = (subscriber) => {
+    const subscribe = (onNext, ...rest) => {
+        return subscriber(onNext, ...rest);
+    };
 
-export const createObservable = withPipe((subscriber) => {
+    return {
+        subscribe,
+    };
+};
 
+// const id = () =>
+//     (subscriber) => {
+//         const subscribe = (onNext) => {
+//             return subscriber(onNext);
+//         };
+
+//         return {
+//             subscribe,
+//         };
+//     };
+
+const createThreeObservable = (subscriber) => {
+    const subscribe = (onNext, onError, onComplete) => {
+        const cleanup = subscriber(onNext, onError, onComplete);
+        return cleanup;
+    };
+
+    return {
+        subscribe,
+    };
+};
+
+const withErrorAndComplete = (create) => (subscriber) => {
     const subscribe = (onNext = noop, onError = noop, onComplete = noop) => {
         let next;
         const next$ = createSingleObservable((n) => {
@@ -40,11 +70,19 @@ export const createObservable = withPipe((subscriber) => {
         };
 
         try {
-            const cleanup = subscriber(
+            const cleanup = create(subscriber)(
                 wrappedOnNext,
                 wrappedOnError,
                 wrappedOnComplete
             );
+            // const observable$ = create((next) => {
+            //     const cleanup = subscriber(next) || noop;
+
+            //     return () => {
+            //         unsubscribe();
+            //         cleanup();
+            //     };
+            // });
 
             return () => {
                 unsubscribeNext();
@@ -63,13 +101,15 @@ export const createObservable = withPipe((subscriber) => {
     return {
         subscribe,
     };
-});
+};
+
+export const createErrorAndCompleteObservable = withErrorAndComplete(createThreeObservable);
 
 export const createSubject = () => {
     // const subscribers = [];
     let nextSubscriber;
-    const subscriber$ = createSingleObservable(next => {
-        nextSubscriber = next;
+    const subscriber$ = createSingleObservable(n => {
+        nextSubscriber = n;
     });
 
     // 1. use a buffer operator to build a list?
@@ -77,7 +117,9 @@ export const createSubject = () => {
     // 3. ???
     let next;
     subscriber$.subscribe(subscriber => {
+        next$.subscribe(inner => {
 
+        });
     });
 
     const stream$ = createObservable((next, error, complete) => {
