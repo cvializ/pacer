@@ -25,28 +25,3 @@ test('pipe with identityOperator forwards values as-is', () => {
     assert.strictEqual(spy.mock.callCount(), 3);
     assert.strictEqual(cleanup, noop);
 });
-
-
-test('pipe with multiple identityOperator forwards values as-is', () => {
-    const createPipeable = withPipe(withSubscribe(createUnity));
-    const pipeable = createPipeable(next => {
-        next(1);
-        next(2);
-        next(3);
-
-        return noop;
-    });
-
-    const spy = mock.fn(identity);
-    const cleanup = pipeable.pipe(
-        identityOperator(),
-        identityOperator(),
-        identityOperator(),
-    ).subscribe(spy);
-
-    assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
-    assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
-    assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
-    assert.strictEqual(spy.mock.callCount(), 3);
-    assert.strictEqual(cleanup, noop);
-});

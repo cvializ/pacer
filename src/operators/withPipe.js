@@ -1,6 +1,4 @@
-import { withBehavior } from "../unities/withBehavior.js";
-
-export const withPipe = withBehavior((create, ...args) => {
+export const withPipe = create => (...args) => {
     const subscribable = create(...args);
 
     const pipe = (...operators) => (
@@ -14,4 +12,4 @@ export const withPipe = withBehavior((create, ...args) => {
         ...subscribable,
         pipe
     };
-});
+};

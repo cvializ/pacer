@@ -1,4 +1,4 @@
-import { createPipeable } from "./createPipeable";
+import { createPipeable } from "./createPipeable.js";
 
 export const filter = (condition) => source$ => {
     return createPipeable((next, ...rest) => {

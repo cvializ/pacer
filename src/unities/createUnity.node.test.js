@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { createUnity } from './createUnity.js';
-import { terseCreateUnity as createUnity } from './createUnity.js';
 
 test('deep-equality to object', () => {
     const unity = createUnity();

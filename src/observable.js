@@ -140,7 +140,7 @@ export const createSubject = () => {
         };
     });
 
-    const next = (value) => {
+    const nextOut = (value) => {
         subscribers.forEach(subscriber => subscriber.next(value));
     }
 
@@ -154,7 +154,7 @@ export const createSubject = () => {
 
     return {
         stream$,
-        next,
+        next: nextOut,
         error,
         complete,
     };

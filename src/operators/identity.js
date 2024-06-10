@@ -1,6 +1,6 @@
 import { createPipeable } from "./createPipeable.js";
 
-const terseIdentity = () => source$ => createPipeable((...next) => source$.subscribe(...next));
+export const terseIdentity = () => source$ => createPipeable((...next) => source$.subscribe(...next));
 
 const nIdentity = () => (source$) => {
     return createPipeable((next, ...args) => {

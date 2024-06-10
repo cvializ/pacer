@@ -1,24 +1,28 @@
-import { createPipeable } from "../operators/createPipeable.js";
-import { createSubscribable } from "./createSubscribable.js";
+
+import { createUnity } from "../unities/createUnity.js";
+import { withSubscribe } from "./withSubscribe.js";
+import { withUnsubscribe } from "./withUnsubscribe.js";
+
+const createSubscribableWithUnsubscribe = withUnsubscribe(withSubscribe(createUnity));
 
 export const withErrorAndComplete = create => subscriber => {
     const subscribable = create(subscriber);
 
     const subscribe = (onNext = noop, onError = noop, onComplete = noop) => {
         let next;
-        const next$ = createSubscribable((n) => {
+        const next$ = createSubscribableWithUnsubscribe((n) => {
             next = n;
         });
         const unsubscribeNext = next$.subscribe((value) => onNext(value));
 
         let error;
-        const error$ = createSubscribable((e) => {
+        const error$ = createSubscribableWithUnsubscribe((e) => {
             error = e;
         });
         const unsubscribeError = error$.subscribe((error) => onError(error));
 
         let complete;
-        const complete$ = createSubscribable((c) => {
+        const complete$ = createSubscribableWithUnsubscribe((c) => {
             complete = c;
         });
         const unsubscribeComplete = complete$.subscribe(() => onComplete());

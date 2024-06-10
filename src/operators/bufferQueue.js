@@ -1,4 +1,4 @@
-import { createPipeable } from "./createPipeable";
+import { createPipeable } from "./createPipeable.js";
 
 export const bufferQueue = (length) => (source$) => {
     return createPipeable((next, ...args) => {
