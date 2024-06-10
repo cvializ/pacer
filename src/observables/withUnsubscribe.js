@@ -1,5 +1,4 @@
 import { filter } from "../operators/filter.js";
-import { map } from "../operators/map.js";
 import { pick } from "../operators/pick.js";
 import { scan } from "../operators/scan.js";
 import { withPipe } from "../operators/withPipe.js";
@@ -27,28 +26,14 @@ export const withUnsubscribe = (create) => (subscriber) => {
         };
     });
 
-    const tap = (cb) => map (value => {
-        cb(value);
-        return value;
-    });
-
     return merge(
         unsubscribe$.pipe(
-            tap(v => {
-                console.log(`UNSUB: ${v}`);
-            }),
             wrapWithKey('unsubscribe')),
         observable$.pipe(
-            tap(v => {
-                console.log(`VALUE: ${v}`);
-            }),
             wrapWithKey('value')),
     ).pipe(
         scan((acc, d) => ({ ...acc, ...d }), {}),
         filter(({ unsubscribe }) => !unsubscribe),
         pick('value'),
-        tap(v => {
-            console.log(`WOAH: ${v}`);
-        }),
     );
 };

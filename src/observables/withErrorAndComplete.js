@@ -1,9 +1,14 @@
 
+import { noop } from "../functional.js";
+import { map } from "../operators/map.js";
+import { withPipe } from "../operators/withPipe.js";
 import { createUnity } from "../unities/createUnity.js";
 import { withSubscribe } from "./withSubscribe.js";
 import { withUnsubscribe } from "./withUnsubscribe.js";
 
-const createSubscribableWithUnsubscribe = withUnsubscribe(withSubscribe(createUnity));
+const createSubscribableWithUnsubscribe = withUnsubscribe(withPipe(withSubscribe(createUnity)));
+
+const tap = (cb) => map(v => { cb(); return v; });
 
 export const withErrorAndComplete = create => subscriber => {
     const subscribable = create(subscriber);
@@ -12,22 +17,28 @@ export const withErrorAndComplete = create => subscriber => {
         let next;
         const next$ = createSubscribableWithUnsubscribe((n) => {
             next = n;
+            return noop;
         });
-        const unsubscribeNext = next$.subscribe((value) => onNext(value));
+        const unsubscribeNext = next$.pipe(
+            tap(value => console.log('NEXT:', value)),
+        ).subscribe((value) => onNext(value));
 
         let error;
         const error$ = createSubscribableWithUnsubscribe((e) => {
             error = e;
+            return noop;
         });
         const unsubscribeError = error$.subscribe((error) => onError(error));
 
         let complete;
         const complete$ = createSubscribableWithUnsubscribe((c) => {
             complete = c;
+            return noop;
         });
         const unsubscribeComplete = complete$.subscribe(() => onComplete());
 
         const wrappedOnNext = (value) => {
+            console.log('UHU')
             next(value);
         };
         const wrappedOnError = (e) => {
@@ -44,7 +55,7 @@ export const withErrorAndComplete = create => subscriber => {
         };
 
         try {
-            const cleanup = subscribable(
+            const cleanup = subscribable.subscribe(
                 wrappedOnNext,
                 wrappedOnError,
                 wrappedOnComplete
