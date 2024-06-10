@@ -38,7 +38,6 @@ export const withErrorAndComplete = create => subscriber => {
         const unsubscribeComplete = complete$.subscribe(() => onComplete());
 
         const wrappedOnNext = (value) => {
-            console.log('UHU')
             next(value);
         };
         const wrappedOnError = (e) => {
