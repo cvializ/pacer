@@ -17,8 +17,8 @@ export const withUnsubscribe = (create) => (subscriber) => {
         return unsubscribe;
     });
 
-    const observable$ = create((next) => {
-        const cleanup = subscriber(next) || noop;
+    const observable$ = create((next, ...rest) => {
+        const cleanup = subscriber(next, ...rest) || noop;
 
         return () => {
             unsubscribe();

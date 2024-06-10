@@ -1,13 +1,10 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert';
-import { createPipeable } from '../operators/createPipeable.js';
 import { noop } from '../functional.js';
 import { withSubscribe } from './withSubscribe.js';
 import { withErrorAndComplete } from './withErrorAndComplete.js';
 import { withPipe } from '../operators/withPipe.js';
 import { withUnity } from '../unities/withIdentity.js';
-
-const of = scalar => createPipeable(next => next(scalar));
 
 const createObservable = withErrorAndComplete(withPipe(withSubscribe(withUnity)));
 
