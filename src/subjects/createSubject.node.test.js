@@ -16,7 +16,6 @@ test('can be subscribed to', () => {
     const spy = mock.fn();
     stream$.subscribe(spy);
 
-    console.log('COOL')
     next(1);
     next(2);
     next(3);
@@ -24,6 +23,7 @@ test('can be subscribed to', () => {
     assert.strictEqual(spy.mock.calls[0].arguments[0], 1)
     assert.strictEqual(spy.mock.calls[1].arguments[0], 2)
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3)
+    assert.strictEqual(spy.mock.callCount(), 3);
 });
 
 test('can be subscribed to 2x with same events', () => {
@@ -34,7 +34,6 @@ test('can be subscribed to 2x with same events', () => {
     stream$.subscribe(spy);
     stream$.subscribe(spy2);
 
-    console.log('COOL')
     next(1);
     next(2);
     next(3);
@@ -42,10 +41,13 @@ test('can be subscribed to 2x with same events', () => {
     assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
     assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+    assert.strictEqual(spy.mock.callCount(), 3);
 
     assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
     assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+    assert.strictEqual(spy2.mock.callCount(), 3);
+
 });
 
 test('can be subscribed to 2x with different subset', () => {
@@ -63,7 +65,32 @@ test('can be subscribed to 2x with different subset', () => {
     assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
     assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+    assert.strictEqual(spy.mock.callCount(), 3);
 
     assert.strictEqual(spy2.mock.calls[0].arguments[0], 2);
     assert.strictEqual(spy2.mock.calls[1].arguments[0], 3);
+    assert.strictEqual(spy2.mock.callCount(), 2);
+});
+
+
+test('can be unsubscribed to 2x with different subset', () => {
+    const { stream$, next } = createSubject();
+
+    const spy = mock.fn();
+    const spy2 = mock.fn();
+    stream$.subscribe(spy);
+
+    next(1);
+    const unsubscribe = stream$.subscribe(spy2);
+    next(2);
+    unsubscribe();
+    next(3);
+
+    assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
+    assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
+    assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+    assert.strictEqual(spy.mock.callCount(), 3);
+
+    assert.strictEqual(spy2.mock.calls[0].arguments[0], 2);
+    assert.strictEqual(spy2.mock.callCount(), 1);
 });

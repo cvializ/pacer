@@ -1,4 +1,4 @@
-import { createSubject } from "./observable.js";
+import { createSubject } from "./subjects/createSubject";
 
 export const createPollStream = (path) => {
     const { next, error, complete, stream$ } = createSubject();

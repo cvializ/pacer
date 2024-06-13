@@ -1,9 +1,9 @@
-import { merge } from './observable.js';
 import { scan, bufferQueue, filter, map, pairwise, tap } from './operators.js';
 import { getGeolocationPermission, watchPosition } from './geolocation.js';
 import { setMessage } from './tapper.js';
 import { createPollStream } from './pollStream.js';
 import { setBackgroundColor } from './background.js';
+import { merge } from './observables/merge.js';
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
