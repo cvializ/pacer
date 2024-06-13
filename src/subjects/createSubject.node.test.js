@@ -26,7 +26,7 @@ test('can be subscribed to', () => {
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3)
 });
 
-test('can be subscribed to 2x', () => {
+test('can be subscribed to 2x with same events', () => {
     const { stream$, next } = createSubject();
 
     const spy = mock.fn();
@@ -39,7 +39,31 @@ test('can be subscribed to 2x', () => {
     next(2);
     next(3);
 
-    assert.strictEqual(spy2.mock.calls[0].arguments[0], 1)
-    assert.strictEqual(spy2.mock.calls[1].arguments[0], 2)
-    assert.strictEqual(spy2.mock.calls[2].arguments[0], 3)
+    assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
+    assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
+    assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+
+    assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
+    assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
+    assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+});
+
+test('can be subscribed to 2x with different subset', () => {
+    const { stream$, next } = createSubject();
+
+    const spy = mock.fn();
+    const spy2 = mock.fn();
+    stream$.subscribe(spy);
+
+    next(1);
+    stream$.subscribe(spy2);
+    next(2);
+    next(3);
+
+    assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
+    assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
+    assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
+
+    assert.strictEqual(spy2.mock.calls[0].arguments[0], 2);
+    assert.strictEqual(spy2.mock.calls[1].arguments[0], 3);
 });

@@ -8,28 +8,28 @@ import { createPipeable } from "../operators/createPipeable.js";
 // }, e => { error = e; }, c => { complete = c; })
 
 export const createSubject = () => {
-    // const subscribers = [];
-    let nextSubscriber;
-    const subscriber$ = createPipeable(n => {
-        nextSubscriber = n;
-    });
+    const subscribers = [];
+    // let nextSubscriber;
+    // const subscriber$ = createPipeable(n => {
+    //     nextSubscriber = n;
+    // });
 
     // TODO this will break
-    let next;
-    const next$ = createPipeable(n => {
-        console.log('OK')
-        next = n;
-    });
+    // let next;
+    // const next$ = createPipeable(n => {
+    //     console.log('OK')
+    //     next = n;
+    // });
 
     // 1. use a buffer operator to build a list?
     // 2. create a next stream and a subscriber stream and merge scan em <------ this is it
     // 3. ???
-    const cleanup = subscriber$.subscribe(subscriber => {
-        console.log('WOW')
-        next$.subscribe(value => {
-            subscriber.next(value);
-        });
-    });
+    // const cleanup = subscriber$.subscribe(subscriber => {
+    //     console.log('WOW')
+    //     next$.subscribe(value => {
+    //         subscriber.next(value);
+    //     });
+    // });
 
     const stream$ = createObservable((next, error, complete) => {
         const subscriber = {
@@ -37,18 +37,18 @@ export const createSubject = () => {
             error,
             complete,
         };
-        // subscribers.push(subscriber);
-        nextSubscriber(subscriber);
+        subscribers.push(subscriber);
+        // nextSubscriber(subscriber);
 
         return () => {
-            // const index = subscribers.indexOf(subscriber);
-            // subscribers.splice(index, 1);
-
+            const index = subscribers.indexOf(subscriber);
+            subscribers.splice(index, 1);
         };
     });
 
     const wrappedNext = (value) => {
-        next(value);
+        subscribers.forEach(subscriber => subscriber.next(value));
+        // next(value);
     }
 
     const error = (e) => {
