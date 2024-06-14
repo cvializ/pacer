@@ -11,7 +11,7 @@ const createSubscribableWithUnsubscribe = withUnsubscribe(withPipe(withSubscribe
 const tap = (cb) => map(v => { cb(); return v; });
 
 export const withErrorAndComplete = create => subscriber => {
-    const subscribable = create(subscriber);
+    const subscribable$ = create(subscriber);
 
     const subscribe = (onNext = noop, onError = noop, onComplete = noop) => {
         let next;
@@ -54,7 +54,7 @@ export const withErrorAndComplete = create => subscriber => {
         };
 
         try {
-            const cleanup = subscribable.subscribe(
+            const cleanup = subscribable$.subscribe(
                 wrappedOnNext,
                 wrappedOnError,
                 wrappedOnComplete
@@ -75,7 +75,7 @@ export const withErrorAndComplete = create => subscriber => {
     };
 
     return {
-        ...subscribable,
+        ...subscribable$,
         subscribe,
     };
 };

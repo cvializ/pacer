@@ -9,30 +9,9 @@ import { createPipeable } from "../operators/createPipeable.js";
 
 // export const withMultipleSubscribers = create => () =>
 
-export const withMultipleSubscribers = create => (/* terminal? */) => {
+export const withMultipleSubscribers = create => (...args) => {
     const subscribers = [];
     let subscriberLength;
-    // let nextSubscriber;
-    // const subscriber$ = createPipeable(n => {
-    //     nextSubscriber = n;
-    // });
-
-    // TODO this will break
-    // let next;
-    // const next$ = createPipeable(n => {
-    //     console.log('OK')
-    //     next = n;
-    // });
-
-    // 1. use a buffer operator to build a list?
-    // 2. create a next stream and a subscriber stream and merge scan em <------ this is it
-    // 3. ???
-    // const cleanup = subscriber$.subscribe(subscriber => {
-    //     console.log('WOW')
-    //     next$.subscribe(value => {
-    //         subscriber.next(value);
-    //     });
-    // });
 
     const stream$ = create((next, ...rest) => {
         const subscriber = [next, ...rest];

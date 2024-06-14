@@ -3,8 +3,9 @@ import { test, mock } from 'node:test';
 import assert from 'node:assert';
 import { withMultipleSubscribers } from './withMultipleSubscribers.js';
 import { createObservable } from '../observables/createObservable.js';
+import { withErrorAndCompleteSemantics } from './withErrorAndCompleteSemantics.js';
 
-const createSubject = withMultipleSubscribers(createObservable);
+const createSubject = withErrorAndCompleteSemantics(withMultipleSubscribers(createObservable));
 
 test('has subscribe, pipe, next and emitters properties', () => {
     const stream$ = createSubject();
@@ -13,7 +14,9 @@ test('has subscribe, pipe, next and emitters properties', () => {
     assert.ok(stream$.subscribe);
     assert.ok(stream$.pipe);
     assert.ok(stream$.next);
-    assert.ok(stream$.emitters);
+    assert.ok(stream$.error);
+    assert.ok(stream$.complete);
+    assert.ok(stream$.emitters); // keeping it because the vibe is additive not subtractive
 });
 
 test('can be subscribed to', () => {
