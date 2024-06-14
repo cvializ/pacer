@@ -32,4 +32,4 @@ import { withUnsubscribe } from "./withUnsubscribe.js";
 // };
 
 
-export const createObservable = withUnsubscribe(withErrorAndComplete(createPipeable));
+export const createObservable = withErrorAndComplete(withUnsubscribe(createPipeable));

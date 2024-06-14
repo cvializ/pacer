@@ -1,4 +1,4 @@
-import { createSubject } from "./subjects/createSubject";
+import { createSubject } from "./subjects/withMultipleSubscribers";
 
 export const createPollStream = (path) => {
     const { next, error, complete, stream$ } = createSubject();

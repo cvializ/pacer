@@ -1,17 +1,24 @@
 
 import { test, mock } from 'node:test';
 import assert from 'node:assert';
-import { createSubject } from './createSubject.js';
+import { withMultipleSubscribers } from './withMultipleSubscribers.js';
+import { createObservable } from '../observables/createObservable.js';
 
-test('has subscribe property', () => {
-    const { stream$ } = createSubject();
+const createSubject = withMultipleSubscribers(createObservable);
 
+test.only('has subscribe, pipe, next and emitters properties', () => {
+    const stream$ = createSubject();
+
+    // check the API has the functions it should
     assert.ok(stream$.subscribe);
     assert.ok(stream$.pipe);
+    assert.ok(stream$.next);
+    assert.ok(stream$.emitters);
 });
 
 test('can be subscribed to', () => {
-    const { stream$, next } = createSubject();
+    const stream$ = createSubject();
+    const { next } = stream$;
 
     const spy = mock.fn();
     stream$.subscribe(spy);
@@ -27,7 +34,8 @@ test('can be subscribed to', () => {
 });
 
 test('can be subscribed to 2x with same events', () => {
-    const { stream$, next } = createSubject();
+    const stream$ = createSubject();
+    const { next } = stream$;
 
     const spy = mock.fn();
     const spy2 = mock.fn();
@@ -51,7 +59,8 @@ test('can be subscribed to 2x with same events', () => {
 });
 
 test('can be subscribed to 2x with different subset', () => {
-    const { stream$, next } = createSubject();
+    const stream$ = createSubject();
+    const { next } = stream$;
 
     const spy = mock.fn();
     const spy2 = mock.fn();
@@ -74,7 +83,8 @@ test('can be subscribed to 2x with different subset', () => {
 
 
 test('can be unsubscribed to 2x with different subset', () => {
-    const { stream$, next } = createSubject();
+    const stream$ = createSubject();
+    const { next } = stream$;
 
     const spy = mock.fn();
     const spy2 = mock.fn();
