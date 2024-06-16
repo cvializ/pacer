@@ -13,9 +13,9 @@
  * generally want operators etc. for application code.
  */
 
-import { createPipeable } from "../operators/createPipeable.js";
+import { withPipe } from "../operators/withPipe.js";
+import { createUnsubscribable } from "./createUnsubscribable.js";
 import { withErrorAndComplete } from "./withErrorAndComplete.js";
-import { withUnsubscribe } from "./withUnsubscribe.js";
 
 // const terseCreateObservable = (subscriber) => ({
 //     subscribe: (...onNext) => subscriber(...onNext)
@@ -32,4 +32,4 @@ import { withUnsubscribe } from "./withUnsubscribe.js";
 // };
 
 
-export const createObservable = withErrorAndComplete(withUnsubscribe(createPipeable));
+export const createObservable = withPipe(withErrorAndComplete(createUnsubscribable));

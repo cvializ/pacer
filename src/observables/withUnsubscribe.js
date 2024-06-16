@@ -1,3 +1,4 @@
+import { noop } from "../functional.js";
 import { filter } from "../operators/filter.js";
 import { pick } from "../operators/pick.js";
 import { scan } from "../operators/scan.js";

@@ -1,16 +1,15 @@
-import { test, mock } from 'node:test';
-import assert from 'node:assert';
-import { withPipe } from './withPipe.js';
-import { createUnity } from '../unities/createUnity.js';
-import { withSubscribe } from '../observables/withSubscribe.js';
-import { identity as identityOperator } from './identity.js';
-import { identity, noop } from '../functional.js';
-import { of } from '../observables/of.js';
-import { mergeAll } from './mergeAll.js';
+import { test, mock } from "node:test";
+import assert from "node:assert";
+import { withPipe } from "./withPipe.js";
+import { createUnity } from "../unities/createUnity.js";
+import { withSubscribe } from "../observables/withSubscribe.js";
+import { identity, noop } from "../functional.js";
+import { of } from "../observables/of.js";
+import { mergeAll } from "./mergeAll.js";
 
-test('flattens an observable of observables', () => {
+test("flattens an observable of observables", () => {
     const createPipeable = withPipe(withSubscribe(createUnity));
-    const pipeable = createPipeable(next => {
+    const pipeable = createPipeable((next) => {
         next(of(1));
         next(of(2));
         next(of(3));
@@ -19,7 +18,7 @@ test('flattens an observable of observables', () => {
     });
 
     const spy = mock.fn(identity);
-    const cleanup = pipeable.pipe(mergeAll()).subscribe(spy)
+    const cleanup = pipeable.pipe(mergeAll()).subscribe(spy);
 
     assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
     assert.strictEqual(spy.mock.calls[1].arguments[0], 2);

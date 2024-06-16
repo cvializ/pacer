@@ -1,12 +1,7 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert';
 import { noop } from '../functional.js';
-import { withSubscribe } from './withSubscribe.js';
-import { withErrorAndComplete } from './withErrorAndComplete.js';
-import { withPipe } from '../operators/withPipe.js';
-import { withUnity } from '../unities/withIdentity.js';
-
-const createObservable = withErrorAndComplete(withPipe(withSubscribe(withUnity)));
+import { createObservable } from './createObservable.js';
 
 test('returns a pipeable', () => {
     const stream$ = createObservable((next) => {});

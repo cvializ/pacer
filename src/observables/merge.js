@@ -1,8 +1,4 @@
-import { withPipe } from "../operators/withPipe.js";
-import { createUnity } from "../unities/createUnity.js";
-import { withSubscribe } from "./withSubscribe.js";
-
-const createPipeable = withPipe(withSubscribe(createUnity));
+import { createPipeable } from "../operators/createPipeable.js";
 
 export const merge = (...sources) => {
     return createPipeable((next, ...args) => {

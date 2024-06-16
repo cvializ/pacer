@@ -17,9 +17,7 @@ export const terseWithSubscribe = create => subscriber => ({
 export const withSubscribe = create => subscriber => {
     const subscribe = (onNext, ...rest) => {
         const cleanup = subscriber(onNext, ...rest);
-        return () => {
-            cleanup();
-        };
+        return cleanup
     };
 
     return {
