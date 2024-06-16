@@ -11,11 +11,11 @@ import { createPipeable } from "../operators/createPipeable.js";
 
 export const withMultipleSubscribers = create => (...args) => {
     const subscribers = [];
-    let subscriberLength;
+    // let subscriberLength;
 
     const stream$ = create((next, ...rest) => {
         const subscriber = [next, ...rest];
-        subscriberLength = subscriber.length;
+        // subscriberLength = subscriber.length;
         subscribers.push(subscriber);
         // nextSubscriber(subscriber);
 

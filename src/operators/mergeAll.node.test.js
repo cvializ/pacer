@@ -25,3 +25,28 @@ test("flattens an observable of observables", () => {
     assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
     assert.strictEqual(spy.mock.callCount(), 3);
 });
+
+
+// test("emits complete only after all have completed", () => {
+//     let complete1;
+//     const observable1$ = createObservable((n, e, c) => {
+//         complete1 = c;
+//     })
+//     let complete2;
+//     const observable2$ = createObservable((n, e, c) => {
+//         complete2 = c;
+//     });
+
+//     const pipeable$ = createPipeable(next => {
+//         next(observable1$);
+//         next(observable2$);
+//     });
+
+//     const spy = mock.fn(identity);
+//     const cleanup = pipeable$.pipe(mergeAll()).subscribe(noop, noop, spy);
+
+//     complete1();
+//     assert.strictEqual(spy.mock.callCount(), 0);
+//     complete2();
+//     assert.strictEqual(spy.mock.callCount(), 1);
+// });

@@ -2,7 +2,6 @@ import { test, mock } from 'node:test';
 import assert from 'node:assert';
 import { merge } from './merge.js';
 import { createPipeable } from '../operators/createPipeable.js';
-import { noop } from '../functional.js';
 
 const of = scalar => createPipeable(next => next(scalar));
 
@@ -46,43 +45,3 @@ test('subscribes and emits nested observable values', () => {
     assert.strictEqual(spy.mock.calls[5].arguments[0], 6);
     assert.strictEqual(spy.mock.callCount(), 6);
 });
-
-
-// test('unsubscribes ???', () => {
-//     let nextOne;
-//     const puppetOne$ = createPipeable((n) => {
-//         nextOne = n;
-//         return noop;
-//     });
-
-//     let nextTwo;
-//     const puppetTwo$ = createPipeable((n) => {
-//         nextTwo = n;
-//         return noop;
-//     });
-
-//     const merged$ = merge(puppetOne$, puppetTwo$);
-
-//     const spy = mock.fn(value => assert.ok(value));
-
-//     const unsubscribe = merged$.subscribe(spy);
-
-//     nextOne(1);
-//     nextTwo(2);
-//     nextOne(3);
-
-//     unsubscribe();
-
-//     nextTwo(4);
-//     nextOne(5);
-//     nextTwo(6);
-
-
-//     assert.strictEqual(spy.mock.calls[0].arguments[0], 1);
-//     assert.strictEqual(spy.mock.calls[1].arguments[0], 2);
-//     assert.strictEqual(spy.mock.calls[2].arguments[0], 3);
-//     assert.strictEqual(spy.mock.calls[3].arguments[0], 4);
-//     assert.strictEqual(spy.mock.calls[4].arguments[0], 5);
-//     assert.strictEqual(spy.mock.calls[5].arguments[0], 6);
-//     assert.strictEqual(spy.mock.callCount(), 3);
-// });

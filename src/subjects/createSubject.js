@@ -1,5 +1,5 @@
-import { createObservable } from "../observables/createObservable";
-import { withErrorAndCompleteSemantics } from "./withErrorAndCompleteSemantics";
-import { withMultipleSubscribers } from "./withMultipleSubscribers";
+import { createObservable } from "../observables/createObservable.js";
+import { withErrorAndCompleteSemantics } from "./withErrorAndCompleteSemantics.js";
+import { withMultipleSubscribers } from "./withMultipleSubscribers.js";
 
 export const createSubject = withErrorAndCompleteSemantics(withMultipleSubscribers(createObservable));

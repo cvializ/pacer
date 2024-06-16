@@ -1,68 +1,34 @@
-import { noop } from "./functional";
-import { createObservable } from "./observables/createObservable";
-import { createPipeable } from "./operators/createPipeable";
-import { createSubject } from "./subjects/createSubject";
-
-const timer = (repeat) => {
-    return createObservable((next) => {
-        let i = 0;
-        const timeoutId = setTimeout(() => {
-            i += 1;
-            next(repeat * i);
-        }, repeat);
-
-        return () => {
-            clearInterval(timeoutId);
-        };
-    });
-};
+import { fromPromise } from "./observables/fromPromise.js";
+import { timer } from "./observables/timer.js";
+import { map } from "./operators/map.js";
+import { mergeAll } from "./operators/mergeAll.js";
 
 
-const mergeAll = () => (source$) => {
-    return createPipeable((next, error, complete) => {
-        const unsubscribe = source$.subscribe((child$) => {
-            // Use a subject to track cleanups
-            const cleanup = child$.subscribe(
-                value => next(value),
-                e => error(e),
-                () => complete(),
-            );
-        }, error, complete);
-
-        return unsubscribe;
-    });
-};
-
-const fromPromise = promiseGetter => createObservable((next, error, complete) => {
-    promiseGetter.then(value => next(value), e => error(e)).finally(() => complete());
-    return noop;
-});
-
-const createPollStreamTerse = (path) =>
-    timer(100).pipe(
+export const createPollStream = (path, interval = 1000) =>
+    timer(interval).pipe(
         map(() => fromPromise(() => fetch(path))),
         mergeAll(),
-        map((response) => response.json()),
+        map((response) => fromPromise(() => response.json())),
         mergeAll(),
     );
 
-export const createPollStream = (path) => {
-    const stream$ = createSubject();
-    const { next, error } = stream$;
+// export const createPollStream = (path) => {
+//     const stream$ = createSubject();
+//     const { next, error } = stream$;
 
-    const fetchLoop = () => {
-        window.fetch(path)
-            .then(response => response.json())
-            .then(json => next(json))
-            .catch(e => {
-                error(e);
-            })
-            .then(() => {
-                setTimeout(fetchLoop, 100);
-            });
-    }
+//     const fetchLoop = () => {
+//         window.fetch(path)
+//             .then(response => response.json())
+//             .then(json => next(json))
+//             .catch(e => {
+//                 error(e);
+//             })
+//             .then(() => {
+//                 setTimeout(fetchLoop, 100);
+//             });
+//     }
 
-    setTimeout(fetchLoop, 100);
+//     setTimeout(fetchLoop, 100);
 
-    return stream$;
-};
+//     return stream$;
+// };
