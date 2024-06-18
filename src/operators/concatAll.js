@@ -1,4 +1,5 @@
-import { createPipeable } from "./createPipeable";
+import { noop } from "../functional.js";
+import { createPipeable } from "./createPipeable.js";
 
 export const concatAll = () => (source$) => {
     return createPipeable((...subscriber) => {
@@ -6,19 +7,42 @@ export const concatAll = () => (source$) => {
     });
 }
 
-const getNext = destination => destination[0];
-const getError = destination => destination[1];
-const getComplete = destination => destination[2];
+// const getNext = destination => destination[0];
+// const getError = destination => destination[1];
+// const getComplete = destination => destination[2];
 
-const operate = ({
-    destination,
-    next,
-    error,
-    complete,
-    finalize,
-}) => {
+// const operate = ({
+//     destination,
+//     next,
+//     error,
+//     complete,
+//     finalize,
+// }) => {
+//     return [
+//         (value) => getNext(destination)(value)
+//     ];
+// };
+
+
+
+const operate = (destination, ...override) => {
+    const [destinationNext, destinationError = noop, destinationComplete = noop] = destination;
+    const [overrideNext, overrideError, overrideComplete] = override;
+
+    const next = overrideNext ? (value) => {
+        overrideNext(value);
+    } : destinationNext;
+    const error = overrideError ? (e) => {
+        overrideError(e);
+    } : destinationError;
+    const complete = overrideComplete ? () => {
+        overrideComplete();
+    } : destinationComplete;
+
     return [
-        (value) => getNext(destination)(value)
+        next,
+        error,
+        complete,
     ];
 };
 
@@ -27,10 +51,10 @@ const internals = (source$, destination) => {
     const buffer = [];
     // The number of active inner subscriptions.
     let active = 0;
-    // An index to pass to our accumulator function
-    let index = 0;
     // Whether or not the outer source has completed.
     let isComplete = false;
+
+    const concurrent = 1;
 
     const [next, error, complete] = destination;
 
@@ -59,24 +83,16 @@ const internals = (source$, destination) => {
         // move to the next item in the buffer, if there is on.
         let innerComplete = false;
 
-
-        const operate = (destination, ...overrides) => {
-            const [next, error, complete] = destination;
-        };
-
         // Start our inner subscription.
         value$.subscribe(
-            ...operate({
+            ...operate(
                 destination,
-                next: (innerValue) => {
+                (innerValue) => {
                     next(innerValue);
                 },
-                complete: () => {
-                    // Flag that we have completed, so we know to check the buffer
-                    // during finalization.
+                undefined,
+                () => {
                     innerComplete = true;
-                },
-                finalize: () => {
                     // During finalization, if the inner completed (it wasn't errored or
                     // cancelled), then we want to try the next item in the buffer if
                     // there is one.
@@ -100,26 +116,31 @@ const internals = (source$, destination) => {
                             // Check to see if we can complete, and complete if so.
                             checkComplete();
                         } catch (err) {
-                            destination.error(err);
+                            error(err);
                         }
                     }
                 },
-            })
+            )
         );
     };
 
-    // Subscribe to our source observable.
-    source$.subscribe(
-        ...operate({
-            destination,
-            next: outerNext,
-            complete: () => {
-                // Outer completed, make a note of it, and check to see if we can complete everything.
-                isComplete = true;
-                checkComplete();
-            },
-        })
+    const subscriber = operate(
+        destination,
+        outerNext,
+        undefined,
+        () => {
+            // Outer completed, make a note of it, and check to see if we can complete everything.
+            isComplete = true;
+            checkComplete();
+        }
     );
+
+    // Subscribe to our source observable.
+    const cleanup = source$.subscribe(
+        ...subscriber
+    );
+
+    return cleanup;
 }
 // export const concatAll = () => (source$) => {
 //     return createPipeable((...destination) => {
