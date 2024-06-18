@@ -5,15 +5,13 @@ export const timer = (repeat) => {
         let i = 0;
         let timeoutId;
 
-        const loop = () => {
+        timeoutId = setInterval(() => {
             i += 1;
             next(repeat * i);
-            timeoutId = setTimeout(loop, repeat);
-        }
-        timeoutId = setTimeout(loop, repeat);
+        }, repeat);
 
         return () => {
-            clearTimeout(timeoutId);
+            clearInterval(timeoutId);
         };
     });
 };
