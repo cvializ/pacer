@@ -48,7 +48,7 @@ const resolveAfterNCalls = (n) => {
     }
 };
 
-test.only("subject", async (t) => {
+test("subject", async (t) => {
     t.mock.timers.enable();
     t.mock.method(global, 'fetch', () => {
         const mockResponse = {

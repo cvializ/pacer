@@ -1,15 +1,12 @@
 import { fromPromise } from "./observables/fromPromise.js";
 import { timer } from "./observables/timer.js";
-import { map } from "./operators/map.js";
-import { mergeAll } from "./operators/mergeAll.js";
+import { mergeMap } from "./operators/mergeMap.js";
 
 
 export const createPollStream = (path, interval = 1000) =>
     timer(interval).pipe(
-        map(() => fromPromise(() => fetch(path))),
-        mergeAll(),
-        map((response) => fromPromise(() => response.json())),
-        mergeAll(),
+        mergeMap(() => fromPromise(() => fetch(path))),
+        mergeMap((response) => fromPromise(() => response.json())),
     );
 
 // export const createPollStream = (path) => {

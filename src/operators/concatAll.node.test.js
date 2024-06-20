@@ -29,7 +29,7 @@ test("flattens an observable of observables", () => {
 });
 
 
-test.only("emits complete only after all have completed", () => {
+test("emits complete only after all have completed", () => {
     let next1;
     let complete1;
     const observable1$ = createObservable((n, e, c) => {
