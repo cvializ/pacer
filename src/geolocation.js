@@ -1,4 +1,4 @@
-import { createObservable } from './observable.js';
+import { createObservable } from "./observables/createObservable.js";
 
 export const watchPosition = () => {
     return createObservable((next, error, complete) => {

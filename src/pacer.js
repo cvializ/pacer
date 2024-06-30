@@ -1,9 +1,9 @@
-import { merge } from './observable.js';
 import { scan, bufferQueue, filter, map, pairwise, tap } from './operators.js';
 import { getGeolocationPermission, watchPosition } from './geolocation.js';
 import { setMessage } from './tapper.js';
 import { createPollStream } from './pollStream.js';
 import { setBackgroundColor } from './background.js';
+import { merge } from './observables/merge.js';
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
@@ -52,17 +52,17 @@ const run = () => {
         unit: 'mile-per-hour',
     });
     const formatMph = (value) => mphFormatter.format(value)
-    const averageSpeed$ = position$.pipe(
-        map(({ speed }) => speed),
-        filter(speed => speed !== null),
-        bufferQueue(5),
-        map(average),
-        map(metersPerSecondToMilesPerHour),
-    );
-
-    // const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
-    //     map(value => value.averageSpeed),
+    // const averageSpeed$ = position$.pipe(
+    //     map(({ speed }) => speed),
+    //     filter(speed => speed !== null),
+    //     bufferQueue(5),
+    //     map(average),
+    //     map(metersPerSecondToMilesPerHour),
     // );
+
+    const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
+        map(value => value.averageSpeed),
+    );
 
     const clamp = (start, end, value) => {
         const range = [start, end];
@@ -89,13 +89,14 @@ const run = () => {
 
     const targetSpeed = 8; // 8mph = 7:30 min /mile
 
-    averageSpeed$.pipe(
+    const unsubscribe = averageSpeed$.pipe(
         map(speed => targetSpeed - speed),
         map(value => clamp(0, 3, value)),
         map(value => 1 - value),
         map(value => toStatusColor(value)),
     ).subscribe(color => {
-        setBackgroundColor(color)
+        setBackgroundColor(color);
+        unsubscribe();
     });
 
     const averageSpeedFormatted$ = averageSpeed$.pipe(map(formatMph));
@@ -116,9 +117,9 @@ const run = () => {
 export const createInstance = () => {
     return getGeolocationPermission()
         .then(({ state }) => {
-            if (state === 'denied') {
-                return Promise.reject();
-            }
+            // if (state === 'denied') {
+            //     return Promise.reject();
+            // }
             return Promise.resolve();
         })
         .then(() => run());

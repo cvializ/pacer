@@ -4,6 +4,20 @@ const dotDuration = 1.2 / 15;
 const dashDuration = 3 * dotDuration;
 const spaceDuration = 7 * dotDuration;
 
+const morse = (letter) => {
+    return createObservable((next, error, complete) => {
+
+    });
+}
+
+const createMorse = () => {
+    return timer(2833).pipe(
+        mergeMap(() => of('a'), of('n'))),
+        concatMap(() => morse('a'))
+    );
+}
+
+
 document.addEventListener('DOMContentLoaded', (e) => {
     runMorseRepeater();
 });
