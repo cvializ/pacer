@@ -2,12 +2,15 @@ import { getGeolocationPermission, watchPosition } from './geolocation.js';
 import { setMessage } from './tapper.js';
 import { createPollStream } from './pollStream.js';
 import { setBackgroundColor } from './background.js';
-import { merge } from './observables/merge.js';
 import { runMorseRepeater } from './morse.js';
-import { map } from './operators/map.js';
-import { filter } from './operators/filter.js';
-import { pairwise } from './operators/pairwise.js';
-import { scan } from './operators/scan.js';
+// import { merge } from './observables/merge.js';
+// import { map } from './operators/map.js';
+// import { filter } from './operators/filter.js';
+// import { pairwise } from './operators/pairwise.js';
+// import { scan } from './operators/scan.js';
+
+const { merge } = window.rxjs;
+const { map, filter, pairwise, scan } = window.rxjs.operators;
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;

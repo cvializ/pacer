@@ -1,9 +1,16 @@
-import { fromArray } from "./observables/fromArray.js";
-import { zip } from "./observables/zip.js";
-import { last } from "./operators/last.js";
-import { map } from "./operators/map.js";
-import { scan } from "./operators/scan.js";
-import { createSubject } from "./subjects/createSubject.js";
+// import { fromArray } from "./observables/fromArray.js";
+// import { zip } from "./observables/zip.js";
+// import { last } from "./operators/last.js";
+// import { map } from "./operators/map.js";
+// import { scan } from "./operators/scan.js";
+// import { createSubject } from "./subjects/createSubject.js";
+
+const { zip, Subject, from } = window.rxjs;
+const { last, map, scan, tap } = window.rxjs.operators;
+
+const fromArray = (arr) => from(arr);
+
+// const createSubject = () => new Subject();
 
 const BEAT_TIME_SECONDS = 1 / 5;
 
@@ -11,7 +18,7 @@ const REPEAT_COUNT = 1000; // gives 1 hour playtime
 
 // use a Subject here?
 
-const aSubject$ = createSubject();
+// const aSubject$ = createSubject();
 
 
 // const a$ = from('X XX  X XX  X XX  ').pipe(repeat(REPEAT_COUNT));
@@ -67,9 +74,9 @@ export const runMorseRepeater = (averageSpeed$) => {
     volumeGainNodeN.gain.setValueAtTime(0, initialTime);
 
     const codeGainNodeN = context.createGain();
-    // nNodeValue$.subscribe(([value, time]) => {
-    //     codeGainNodeN.gain.setValueAtTime(value, initialTime + time);
-    // });
+    nNodeValue$.subscribe(([value, time]) => {
+        codeGainNodeN.gain.setValueAtTime(value, initialTime + time);
+    });
 
     oscillator.connect(codeGainNodeA)
     codeGainNodeA.connect(volumeGainNodeA);
@@ -79,23 +86,23 @@ export const runMorseRepeater = (averageSpeed$) => {
     codeGainNodeN.connect(volumeGainNodeN);
     volumeGainNodeN.connect(context.destination);
 
-    oscillator.start();
+    oscillator.start(0);
 
     const SPEED_TARGET = 5;
     const SPEED_RANGE = 3; // 3 above, 3 below
 
-    // averageSpeed$.pipe(
-    //     map((speed) => speed - SPEED_TARGET),
-    //     map(difference => difference / SPEED_RANGE),
-    //     map(ratio => Math.max(-1, Math.min(ratio, 1))),
-    //     map(clamped => .5 + clamped * .5),
-    // ).subscribe((normalizedValue) => {
-    //     console.log('SPEED', normalizedValue);
-    //     const aValue = normalizedValue;
-    //     const nValue = 1 - normalizedValue;
-    //     volumeGainNodeA.gain.setValueAtTime(aValue, context.currentTime);
-    //     volumeGainNodeN.gain.setValueAtTime(nValue, context.currentTime);
-    // });
+    averageSpeed$.pipe(
+        map((speed) => speed - SPEED_TARGET),
+        map(difference => difference / SPEED_RANGE),
+        map(ratio => Math.max(-1, Math.min(ratio, 1))),
+        map(clamped => .5 + clamped * .5),
+    ).subscribe((normalizedValue) => {
+        const { currentTime } = context
+        const aValue = normalizedValue;
+        const nValue = 1 - normalizedValue;
+        volumeGainNodeA.gain.setValueAtTime(aValue, currentTime);
+        volumeGainNodeN.gain.setValueAtTime(nValue, currentTime);
+    });
 
     last$.subscribe(lastTimeSeconds => {
         oscillator.stop(initialTime + lastTimeSeconds);

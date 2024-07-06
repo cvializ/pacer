@@ -1,10 +1,14 @@
-import { fromPromise } from "./observables/fromPromise.js";
-import { timer } from "./observables/timer.js";
-import { mergeMap } from "./operators/mergeMap.js";
+// import { fromPromise } from "./observables/fromPromise.js";
+// import { timer } from "./observables/timer.js";
+// import { mergeMap } from "./operators/mergeMap.js";
 
+const { from, timer } = window.rxjs;
+const { mergeMap } = window.rxjs.operators;
+
+const fromPromise = (promiseGetter) => from(promiseGetter());
 
 export const createPollStream = (path, interval = 1000) =>
-    timer(interval).pipe(
+    timer(0, interval).pipe(
         mergeMap(() => fromPromise(() => fetch(path))),
         mergeMap((response) => fromPromise(() => response.json())),
     );

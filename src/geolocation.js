@@ -1,7 +1,11 @@
-import { createObservable } from "./observables/createObservable.js";
+// import { createObservable } from "./observables/createObservable.js";
+
+const { Observable } = window.rxjs;
+
+const createObservable = subscriber => new Observable(subscriber);
 
 export const watchPosition = () => {
-    return createObservable((next, error, complete) => {
+    return createObservable(({ next, error, complete }) => {
         const id = window.navigator.geolocation.watchPosition(
             ({
                 timestamp,
@@ -19,7 +23,9 @@ export const watchPosition = () => {
                     speed: coords.speed,
                 });
             },
-            (e) => { error(e.message) },
+            (e) => {
+                // error(e.message)
+            },
             {
                 enableHighAccuracy: true,
                 maximumAge: 10,
