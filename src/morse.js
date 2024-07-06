@@ -1,24 +1,11 @@
-// import { fromArray } from "./observables/fromArray.js";
-// import { zip } from "./observables/zip.js";
-// import { last } from "./operators/last.js";
-// import { map } from "./operators/map.js";
-// import { scan } from "./operators/scan.js";
-// import { createSubject } from "./subjects/createSubject.js";
-
-const { zip, Subject, from } = window.rxjs;
-const { last, map, scan, tap } = window.rxjs.operators;
+const { zip, from } = window.rxjs;
+const { last, map, scan } = window.rxjs.operators;
 
 const fromArray = (arr) => from(arr);
-
-// const createSubject = () => new Subject();
 
 const BEAT_TIME_SECONDS = 1 / 5;
 
 const REPEAT_COUNT = 1000; // gives 1 hour playtime
-
-// use a Subject here?
-
-// const aSubject$ = createSubject();
 
 
 // const a$ = from('X XX  X XX  X XX  ').pipe(repeat(REPEAT_COUNT));
