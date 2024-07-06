@@ -1,115 +1,103 @@
-import * as rxjs from 'rxjs';
-
-const { from, map, scan, zip } = rxjs;
-
-const n$ = from('XX X  XX X  XX X  ');
-const a$ = from('  X XX  X XX  X XX');
-
-const pair$ = zip(n$, a$);
-
-pair$.pipe(
-
-).subscribe((value) => {
-    console.log(value);
-})
+import { fromArray } from "./observables/fromArray.js";
+import { zip } from "./observables/zip.js";
+import { last } from "./operators/last.js";
+import { map } from "./operators/map.js";
+import { scan } from "./operators/scan.js";
+import { createSubject } from "./subjects/createSubject.js";
 
 const BEAT_TIME_SECONDS = 1 / 5;
+
+const REPEAT_COUNT = 1000; // gives 1 hour playtime
+
+// use a Subject here?
+
+const aSubject$ = createSubject();
+
+
+// const a$ = from('X XX  X XX  X XX  ').pipe(repeat(REPEAT_COUNT));
+// const n$ = from(' X  XX X  XX X  XX').pipe(repeat(REPEAT_COUNT));
+const a$ = fromArray('X XX  X XX  X XX  '.repeat(REPEAT_COUNT).split(''));
+const n$ = fromArray(' X  XX X  XX X  XX'.repeat(REPEAT_COUNT).split(''));
 
 const isWhitespace = value => !/\w/.test(value); // \s doesn't match empty string
 
 const aGain$ = a$.pipe(
-    map(char => isWhitespace(char) ? 0 : 1)
+    map(char => isWhitespace(char) ? 0 : 1),
 );
 
 const nGain$ = n$.pipe(
-    map(char => isWhitespace(char) ? 0 : 1)
+    map(char => isWhitespace(char) ? 0 : 1),
 );
 
-const time$ = a$.pipe(
+const aTime$ = a$.pipe(
+    map(() => BEAT_TIME_SECONDS),
+    scan((acc, d) => (acc * 10 + d * 10) / 10, 0), // floating point math https://www.codemag.com/article/1811041/JavaScript-Corner-Math-and-the-Pitfalls-of-Floating-Point-Numbers
+);
+
+const nTime$ = n$.pipe(
     map(() => BEAT_TIME_SECONDS),
     scan((acc, d) => (acc * 10 + d * 10) / 10), // floating point math https://www.codemag.com/article/1811041/JavaScript-Corner-Math-and-the-Pitfalls-of-Floating-Point-Numbers
-)
+);
 
-zip(n$, time$).subscribe(value => console.log(value));
+const aNodeValue$ = zip(aGain$, aTime$);
+const nNodeValue$ = zip(nGain$, nTime$);
 
-const aNodeValue$ = zip(aGain$, time$);
-const nNodeValue$ = zip(nGain$, time$);
+const last$ = aTime$.pipe(last());
 
-// // gainNode$ = ({ gain: noop });
-// const foo$ = merge(
-//     n$.pipe(
-//         mergeMap(value => fromArray(value.split(''))),
-//         wrapWithKey('n'),
-//     ),
-//     a$.pipe(
-//         mergeMap(value => fromArray(value.split(''))),
-//         wrapWithKey('a'),
-//     ),
-// ).pipe(
-//     scan((acc, d) => ({ ...acc, ...d })),
-// )
-
-// foo$.subscribe(({ n, a }) => {
-//     console.log(n, a)
-//     // gainNode.gain.setValueAtTime(0, t);
-// }, noop, noop);
-
-const runMorseRepeater = () => {
+export const runMorseRepeater = (averageSpeed$) => {
     const AudioContext = globalThis.AudioContext;
     const context = new AudioContext();
 
-    // const code = '.-'; // A
-    let initialTime = context.currentTime;
+    const initialTime = context.currentTime;
 
     const oscillator = context.createOscillator();
     oscillator.type = "sine";
     oscillator.frequency.value = 440; // or 600
 
-    const gainNodeA = context.createGain();
+    const volumeGainNodeA = context.createGain();
+    volumeGainNodeA.gain.setValueAtTime(1, initialTime);
+
+    const codeGainNodeA = context.createGain();
     aNodeValue$.subscribe(([value, time]) => {
-        gainNodeA.gain.setValueAtTime(value, initialTime + time);
+        // It's only calling this once...
+        codeGainNodeA.gain.setValueAtTime(value, initialTime + time);
     });
 
-    const gainNodeN = context.createGain();
-    nNodeValue$.subscribe(([value, time]) => {
-        gainNodeN.gain.setValueAtTime(value, initialTime + time);
-    });
-    // gainNodeA.gain.setValueAtTime(0, t);
+    const volumeGainNodeN = context.createGain();
+    volumeGainNodeN.gain.setValueAtTime(0, initialTime);
 
-    // let totalDuration;
-    // code.split("").forEach(function (letter) {
-    //     switch (letter) {
-    //         case ".":
-    //             gainNode.gain.setValueAtTime(1, t);
-    //             t += dotDuration;
-    //             gainNode.gain.setValueAtTime(0, t);
-    //             t += dotDuration;
-    //             break;
-    //         case "-":
-    //             gainNode.gain.setValueAtTime(1, t);
-    //             t += dashDuration;
-    //             gainNode.gain.setValueAtTime(0, t);
-    //             t += dotDuration;
-    //             break;
-    //         case " ":
-    //             t += spaceDuration;
-    //             break;
-    //     }
+    const codeGainNodeN = context.createGain();
+    // nNodeValue$.subscribe(([value, time]) => {
+    //     codeGainNodeN.gain.setValueAtTime(value, initialTime + time);
     // });
 
-    const source = context.createBufferSource();
-    //connect it to the destination so you can hear it.
-    source.connect(context.destination);
+    oscillator.connect(codeGainNodeA)
+    codeGainNodeA.connect(volumeGainNodeA);
+    volumeGainNodeA.connect(context.destination);
 
-    oscillator.connect(gainNodeA);
-    gainNodeA.connect(context.destination);
-
-    oscillator.connect(gainNodeN);
-    gainNodeN.connect(context.destination);
-
+    oscillator.connect(codeGainNodeN);
+    codeGainNodeN.connect(volumeGainNodeN);
+    volumeGainNodeN.connect(context.destination);
 
     oscillator.start();
 
-    // setTimeout(runMorseRepeater, t);
+    const SPEED_TARGET = 5;
+    const SPEED_RANGE = 3; // 3 above, 3 below
+
+    // averageSpeed$.pipe(
+    //     map((speed) => speed - SPEED_TARGET),
+    //     map(difference => difference / SPEED_RANGE),
+    //     map(ratio => Math.max(-1, Math.min(ratio, 1))),
+    //     map(clamped => .5 + clamped * .5),
+    // ).subscribe((normalizedValue) => {
+    //     console.log('SPEED', normalizedValue);
+    //     const aValue = normalizedValue;
+    //     const nValue = 1 - normalizedValue;
+    //     volumeGainNodeA.gain.setValueAtTime(aValue, context.currentTime);
+    //     volumeGainNodeN.gain.setValueAtTime(nValue, context.currentTime);
+    // });
+
+    last$.subscribe(lastTimeSeconds => {
+        oscillator.stop(initialTime + lastTimeSeconds);
+    });
 }
-runMorseRepeater();

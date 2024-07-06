@@ -1,5 +1,6 @@
+import { runMorseRepeater } from './morse.js';
 import { createInstance } from './pacer.js';
-import { getTapElement, setMessage } from './tapper.js';
+import { getTapElement } from './tapper.js';
 
 const onReadyPromise = new Promise(resolve => {
     document.addEventListener('DOMContentLoaded', resolve);

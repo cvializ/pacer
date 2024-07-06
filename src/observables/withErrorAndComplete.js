@@ -62,7 +62,7 @@ export const withErrorAndComplete = create => subscriber => {
             unsubscribeComplete();
             wrappedOnError(e);
             unsubscribeError();
-            setTimeout(() => { throw e }, 0);
+            setTimeout(() => { throw e }, 1);
         }
     };
 

@@ -1,9 +1,13 @@
-import { scan, bufferQueue, filter, map, pairwise, tap } from './operators.js';
 import { getGeolocationPermission, watchPosition } from './geolocation.js';
 import { setMessage } from './tapper.js';
 import { createPollStream } from './pollStream.js';
 import { setBackgroundColor } from './background.js';
 import { merge } from './observables/merge.js';
+import { runMorseRepeater } from './morse.js';
+import { map } from './operators/map.js';
+import { filter } from './operators/filter.js';
+import { pairwise } from './operators/pairwise.js';
+import { scan } from './operators/scan.js';
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
@@ -64,6 +68,8 @@ const run = () => {
         map(value => value.averageSpeed),
     );
 
+    averageSpeed$.subscribe(() => console.log('lol'));
+
     const clamp = (start, end, value) => {
         const range = [start, end];
         const spread = range[1] - range[0];
@@ -96,7 +102,7 @@ const run = () => {
         map(value => toStatusColor(value)),
     ).subscribe(color => {
         setBackgroundColor(color);
-        unsubscribe();
+        // unsubscribe(); // is this needed?
     });
 
     const averageSpeedFormatted$ = averageSpeed$.pipe(map(formatMph));
@@ -112,6 +118,8 @@ const run = () => {
     }, error => {
         setDebugMessage(error);
     });
+
+    runMorseRepeater(averageSpeed$);
 };
 
 export const createInstance = () => {
