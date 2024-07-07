@@ -25,7 +25,7 @@ const run = () => {
             };
         }),
         pairwise(),
-        map(([later, earlier]) => {
+        map(([earlier, later]) => {
             const intervalMs = later.timestamp - earlier.timestamp;
             const distance = later.speed * intervalMs / 1000;
             return distance;
