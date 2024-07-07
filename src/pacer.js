@@ -54,19 +54,17 @@ const run = () => {
         unit: 'mile-per-hour',
     });
     const formatMph = (value) => mphFormatter.format(value)
-    // const averageSpeed$ = position$.pipe(
-    //     map(({ speed }) => speed),
-    //     filter(speed => speed !== null),
-    //     bufferQueue(5),
-    //     map(average),
-    //     map(metersPerSecondToMilesPerHour),
-    // );
-
-    const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
-        map(value => value.averageSpeed),
+    const averageSpeed$ = position$.pipe(
+        map(({ speed }) => speed),
+        filter(speed => speed !== null),
+        bufferQueue(5),
+        map(average),
+        map(metersPerSecondToMilesPerHour),
     );
 
-    averageSpeed$.subscribe(() => console.log('lol'));
+    // const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
+    //     map(value => value.averageSpeed),
+    // );
 
     const clamp = (start, end, value) => {
         const range = [start, end];
