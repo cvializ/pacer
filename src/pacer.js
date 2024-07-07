@@ -5,7 +5,7 @@ import { setBackgroundColor } from './background.js';
 import { runMorseRepeater } from './morse.js';
 
 const { merge } = window.rxjs;
-const { map, filter, pairwise, scan } = window.rxjs.operators;
+const { map, filter, pairwise, scan, bufferCount } = window.rxjs.operators;
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
@@ -57,7 +57,7 @@ const run = () => {
     const averageSpeed$ = position$.pipe(
         map(({ speed }) => speed),
         filter(speed => speed !== null),
-        bufferQueue(5),
+        bufferCount(3, 1),
         map(average),
         map(metersPerSecondToMilesPerHour),
     );
@@ -109,7 +109,6 @@ const run = () => {
         scan((acc, d) => ({ ...acc, ...d }), {}),
     );
 
-    // TODO: distance is undefined without geolocation?
     mergedMessages$.subscribe(({ speed, distance }) => {
         setMessage(`${speed}\n${distance}`);
     }, error => {
