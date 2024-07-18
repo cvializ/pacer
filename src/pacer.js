@@ -3,9 +3,10 @@ import { setMessage } from './tapper.js';
 import { createPollStream } from './pollStream.js';
 import { setBackgroundColor } from './background.js';
 import { runMorseRepeater } from './morse.js';
+import { createTouchDemo } from './demo.js';
 
-const { merge } = window.rxjs;
-const { map, filter, pairwise, scan, bufferCount } = window.rxjs.operators;
+const { merge, timer } = window.rxjs;
+const { map, filter, pairwise, tap, scan, bufferCount, switchMap } = window.rxjs.operators;
 
 const getDebugMessageElement = () => document.getElementById('debugMessage');
 const setDebugMessage = (message) => getDebugMessageElement().innerText = message;
@@ -14,8 +15,17 @@ const getDebugMessage = () => getDebugMessageElement().innerText;
 const run = () => {
     setMessage('Walk');
 
+    const { touch$, demoMode$, topRightTouch$, bottomRightTouch$} = createTouchDemo();
+
     const position$ = watchPosition();
-    const distance$ = position$.pipe(
+
+    const distanceMock$ = timer(0, 1000).pipe(
+        map(time => {
+            return time;
+        })
+    )
+
+    const distanceReal$ = position$.pipe(
         filter(position => position.speed !== null),
         map((position) => {
             const { speed, timestamp } = position;
@@ -30,6 +40,10 @@ const run = () => {
             const distance = later.speed * intervalMs / 1000;
             return distance;
         }),
+    );
+
+    const distance$ = demoMode$.pipe(
+        switchMap(active => active ? distanceMock$ : distanceReal$),
     );
 
     const sum = (a, b) => a + b;
@@ -54,7 +68,7 @@ const run = () => {
         unit: 'mile-per-hour',
     });
     const formatMph = (value) => mphFormatter.format(value)
-    const averageSpeed$ = position$.pipe(
+    const averageSpeedReal$ = position$.pipe(
         map(({ speed }) => speed),
         filter(speed => speed !== null),
         bufferCount(3, 1),
@@ -62,9 +76,17 @@ const run = () => {
         map(metersPerSecondToMilesPerHour),
     );
 
-    // const averageSpeed$ = createPollStream('/inputs/averageSpeed.json').pipe(
-    //     map(value => value.averageSpeed),
-    // );
+    const decrement$ = bottomRightTouch$.pipe(map(() => -1));
+    const increment$ = topRightTouch$.pipe(map(() => 1));
+    const averageSpeedMock$ = merge(decrement$, increment$).pipe(
+        tap((n) => console.log('mock: ', n)),
+        scan((acc, d) => acc + d, 0),
+    )
+
+
+    const averageSpeed$ = demoMode$.pipe(
+        switchMap(active => active ? averageSpeedMock$ : averageSpeedReal$),
+    );
 
     const clamp = (start, end, value) => {
         const range = [start, end];
